@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abuse Operations Console v2.0</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    @keyframes rainbow {
+      0%   { color: #ff0000; }
+      17%  { color: #ff8000; }
+      33%  { color: #ffff00; }
+      50%  { color: #00cc00; }
+      67%  { color: #0088ff; }
+      83%  { color: #8800ff; }
+      100% { color: #ff0000; }
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    @keyframes pulse-glow {
+      0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(255,0,0,0.7); }
+      50%{ transform:scale(1.06); box-shadow:0 0 8px 3px rgba(255,0,0,0.4); }
+    }
+    @keyframes marquee { from{transform:translateX(100%)} to{transform:translateX(-100%)} }
+    @keyframes scanline {
+      0%{transform:translateY(-100%)}
+      100%{transform:translateY(100vh)}
+    }
+
+    html, body { height:100%; }
+
+    body {
+      font-family: "MS Sans Serif", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      background-color: #008080;
+      background-image:
+        linear-gradient(45deg,#007070 25%,transparent 25%),
+        linear-gradient(-45deg,#007070 25%,transparent 25%),
+        linear-gradient(45deg,transparent 75%,#007070 75%),
+        linear-gradient(-45deg,transparent 75%,#007070 75%);
+      background-size: 4px 4px;
+      background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+      color: #000;
+      min-height: 100vh;
+    }
+
+    ::selection { background:#000080; color:#fff; }
+
+    /* ── Win95 primitives ── */
+    .btn {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: bold;
+      background: #C0C0C0;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
+      padding: 4px 16px;
+      cursor: pointer;
+      user-select: none;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #000;
+      outline: none;
+      white-space: nowrap;
+    }
+    .btn:hover { background:#d0d0d0; }
+    .btn:active, .btn.pressed {
+      border-color: #808080 #ffffff #ffffff #808080;
+      box-shadow: inset 1px 1px 0 #404040, inset -1px -1px 0 #dfdfdf;
+      transform: translate(1px,1px);
+    }
+    .btn:focus-visible { outline: 2px dotted #000; outline-offset: 2px; }
+
+    .btn-blue {
+      background:#0000AA; color:#fff;
+      border-color:#5555ff #000055 #000055 #5555ff;
+      box-shadow: inset -1px -1px 0 #000033, inset 1px 1px 0 #8888ff;
+    }
+    .btn-blue:hover { background:#0000cc; }
+    .btn-blue:active {
+      border-color:#000055 #5555ff #5555ff #000055;
+      box-shadow: inset 1px 1px 0 #000033, inset -1px -1px 0 #8888ff;
+    }
+
+    .btn-red {
+      background:#AA0000; color:#fff;
+      border-color:#ff5555 #550000 #550000 #ff5555;
+      box-shadow: inset -1px -1px 0 #330000, inset 1px 1px 0 #ff8888;
+    }
+    .btn-red:hover{background:#cc0000;}
+    .btn-red:active{
+      border-color:#550000 #ff5555 #ff5555 #550000;
+      box-shadow:inset 1px 1px 0 #330000,inset -1px -1px 0 #ff8888;
+    }
+
+    .btn-green {
+      background:#006600; color:#fff;
+      border-color:#00ff00 #003300 #003300 #00ff00;
+      box-shadow:inset -1px -1px 0 #002200, inset 1px 1px 0 #00cc00;
+    }
+    .btn-green:hover{background:#008800;}
+    .btn-green:active{
+      border-color:#003300 #00ff00 #00ff00 #003300;
+      box-shadow:inset 1px 1px 0 #002200,inset -1px -1px 0 #00cc00;
+    }
+
+    .btn-purple {
+      background:#660066; color:#fff;
+      border-color:#ff66ff #330033 #330033 #ff66ff;
+      box-shadow:inset -1px -1px 0 #220022, inset 1px 1px 0 #cc66cc;
+    }
+    .btn-purple:hover{background:#880088;}
+    .btn-purple:active{
+      border-color:#330033 #ff66ff #ff66ff #330033;
+      box-shadow:inset 1px 1px 0 #220022,inset -1px -1px 0 #cc66cc;
+    }
+
+    .inset {
+      border: 2px solid;
+      border-color: #808080 #ffffff #ffffff #808080;
+      box-shadow: inset 1px 1px 0 #404040, inset -1px -1px 0 #dfdfdf;
+    }
+    .outset {
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
+    }
+
+    /* ── Window / Panel ── */
+    .win-panel {
+      background:#C0C0C0;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
+    }
+    .win-titlebar {
+      background: linear-gradient(to right,#000080,#1084d0);
+      color: #fff;
+      font-weight: bold;
+      font-size: 13px;
+      padding: 3px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+    .win-titlebar-btns { display:flex; gap:2px; }
+    .win-titlebar-btn {
+      width:16px; height:14px;
+      background:#C0C0C0;
+      border:2px solid;
+      border-color:#ffffff #808080 #808080 #ffffff;
+      box-shadow:inset -1px -1px 0 #404040,inset 1px 1px 0 #dfdfdf;
+      display:flex; align-items:center; justify-content:center;
+      font-size:9px; font-weight:bold; cursor:pointer;
+      color:#000;
+    }
+    .win-content {
+      padding: 8px;
+    }
+
+    /* ── Terminal ── */
+    .terminal {
+      background:#000;
+      color:#00ff00;
+      font-family:"Courier New",Courier,monospace;
+      font-size:12px;
+      padding:8px;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      overflow-x:auto;
+      white-space:pre;
+      line-height:1.5;
+    }
+
+    /* ── Inputs ── */
+    .win-input {
+      font-family:"Courier New",Courier,monospace;
+      font-size:12px;
+      background:#fff;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      padding:4px 6px;
+      color:#000;
+      outline:none;
+      width:100%;
+    }
+    .win-input:focus { outline:2px dotted #000; outline-offset:1px; }
+
+    .win-textarea {
+      font-family:"Courier New",Courier,monospace;
+      font-size:12px;
+      background:#fff;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      padding:6px;
+      color:#000;
+      outline:none;
+      resize:vertical;
+      width:100%;
+    }
+    .win-textarea:focus { outline:2px dotted #000; outline-offset:1px; }
+
+    .win-select {
+      font-family:inherit;
+      font-size:12px;
+      background:#fff;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      padding:3px 4px;
+      color:#000;
+      outline:none;
+    }
+    .win-select:focus { outline:2px dotted #000; outline-offset:1px; }
+
+    /* ── Tabs ── */
+    .tab-bar { display:flex; gap:0; align-items:flex-end; padding:0 4px; }
+    .tab {
+      font-family:inherit; font-size:12px; font-weight:bold;
+      background:#C0C0C0;
+      border:2px solid;
+      border-color:#ffffff #808080 #000 #ffffff;
+      padding:4px 12px;
+      cursor:pointer;
+      margin-right:2px;
+      position:relative;
+      top:2px;
+      white-space:nowrap;
+      text-transform:uppercase;
+      letter-spacing:.03em;
+    }
+    .tab.active {
+      background:#C0C0C0;
+      border-bottom-color:#C0C0C0;
+      z-index:2;
+      top:0;
+      padding-top:6px;
+    }
+    .tab:not(.active):hover { background:#d0d0d0; }
+    .tab-content-area {
+      border:2px solid;
+      border-color:#ffffff #808080 #808080 #ffffff;
+      box-shadow:inset -1px -1px 0 #404040,inset 1px 1px 0 #dfdfdf;
+      background:#C0C0C0;
+      padding:12px;
+      position:relative;
+      z-index:1;
+    }
+
+    /* ── Status badges ── */
+    .badge {
+      font-family:"Courier New",monospace;
+      font-size:11px;
+      font-weight:bold;
+      padding:2px 6px;
+      border:2px solid;
+      border-color:#ffffff #808080 #808080 #ffffff;
+      box-shadow:inset -1px -1px 0 #404040,inset 1px 1px 0 #dfdfdf;
+      display:inline-block;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      white-space:nowrap;
+    }
+    .badge-green{ background:#006600; color:#00ff00; border-color:#00ff00 #003300 #003300 #00ff00; }
+    .badge-red  { background:#880000; color:#ff4444; border-color:#ff4444 #440000 #440000 #ff4444; }
+    .badge-yellow{background:#666600; color:#ffff00; border-color:#ffff00 #333300 #333300 #ffff00; }
+    .badge-purple{background:#440044; color:#ff88ff; border-color:#ff88ff #220022 #220022 #ff88ff; }
+    .badge-gray  { background:#808080; color:#ffffff; }
+    .badge-blue  { background:#000080; color:#88aaff; border-color:#88aaff #000044 #000044 #88aaff; }
+
+    /* ── HR ── */
+    .hr-groove {
+      border:none;
+      height:4px;
+      background:linear-gradient(to bottom,#808080 0%,#808080 50%,#ffffff 50%,#ffffff 100%);
+      margin:8px 0;
+    }
+
+    /* ── Marquee ── */
+    .marquee-wrap {
+      background:#000080;
+      overflow:hidden;
+      padding:4px 0;
+      border-top:2px solid #ffffff;
+      border-bottom:2px solid #404040;
+    }
+    .marquee-inner {
+      display:inline-block;
+      animation: marquee 30s linear infinite;
+      white-space:nowrap;
+      font-family:"Courier New",monospace;
+      font-size:12px;
+      font-weight:bold;
+    }
+
+    /* ── Result rows ── */
+    .result-row {
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      background:#fff;
+      margin-bottom:4px;
+      padding:6px 8px;
+    }
+    .result-row:nth-child(even){ background:#f0f0f0; }
+
+    /* ── Evidence log ── */
+    .log-entry {
+      border-bottom:1px solid #808080;
+      padding:4px 6px;
+      background:#fff;
+      font-family:"Courier New",monospace;
+      font-size:11px;
+    }
+    .log-entry:nth-child(even){ background:#fffff0; }
+
+    /* ── Rainbow text ── */
+    .rainbow { animation:rainbow 3s linear infinite; font-weight:bold; }
+    .blink { animation:blink 1s step-end infinite; }
+
+    /* ── NEW badge ── */
+    .new-badge {
+      display:inline-block;
+      background:#ff0000;
+      color:#ffff00;
+      font-size:10px;
+      font-weight:bold;
+      padding:1px 5px;
+      border:2px solid;
+      border-color:#ff8888 #880000 #880000 #ff8888;
+      animation:pulse-glow 1.5s ease-in-out infinite;
+      letter-spacing:.1em;
+    }
+
+    /* ── Layout ── */
+    .app-container { max-width:1280px; margin:0 auto; padding:8px; }
+
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar{ width:16px; height:16px; }
+    ::-webkit-scrollbar-track{ background:#C0C0C0; border:2px inset #808080; }
+    ::-webkit-scrollbar-thumb{
+      background:#C0C0C0;
+      border:2px solid;
+      border-color:#ffffff #808080 #808080 #ffffff;
+    }
+    ::-webkit-scrollbar-corner{ background:#C0C0C0; }
+
+    a{ color:#0000ff; text-decoration:underline; }
+    a:visited{ color:#800080; }
+    a:hover{ color:#ff0000; }
+
+    @media(prefers-reduced-motion:reduce){
+      .rainbow{ animation:none; color:#ff0000; }
+      .blink{ animation:none; }
+      .new-badge{ animation:none; }
+      .marquee-inner{ animation:none; }
+    }
+    @media(max-width:700px){
+      .grid-2,.grid-3{ grid-template-columns:1fr; }
+      .tab{ padding:3px 7px; font-size:11px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+/* ══════════════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════════════ */
+const ts = () => new Date().toISOString().replace('T',' ').slice(0,19);
+
+const normalizeDefanged = t =>
+  t.replace(/hxxps:\/\//gi,'https://')
+   .replace(/hxxp:\/\//gi,'http://')
+   .replace(/\[\.\]|\(\.\)/g,'.')
+   .replace(/\[:\]/g,':');
+
+const defang = url =>
+  url.replace(/https:\/\//gi,'hxxps://')
+     .replace(/http:\/\//gi,'hxxp://')
+     .replace(/\./g,'[.]');
+
+const extractUrls = t => {
+  const n = normalizeDefanged(t);
+  return [...new Set(n.match(/https?:\/\/[^\s"'<>]+/gi)||[])];
+};
+
+const extractIPs = t =>
+  [...new Set((t.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[]))];
+
+const copyToClipboard = async text => {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch { return false; }
+};
+
+const calcSubnet = cidr => {
+  const [ipStr, bits] = cidr.split('/');
+  const prefix = parseInt(bits);
+  if (isNaN(prefix)||prefix<0||prefix>32) return null;
+  const ipParts = ipStr.split('.').map(Number);
+  if (ipParts.length!==4||ipParts.some(x=>isNaN(x)||x<0||x>255)) return null;
+  const ipNum = ipParts.reduce((a,b)=>(a<<8)|b,0)>>>0;
+  const mask = prefix===0 ? 0 : (0xFFFFFFFF<<(32-prefix))>>>0;
+  const netw = (ipNum&mask)>>>0;
+  const bcast= (netw|(~mask>>>0))>>>0;
+  const n2ip = n=>[24,16,8,0].map(s=>(n>>s)&0xff).join('.');
+  return {
+    network: n2ip(netw),
+    netmask: n2ip(mask),
+    broadcast: n2ip(bcast),
+    firstHost: prefix>=31 ? n2ip(netw) : n2ip(netw+1),
+    lastHost:  prefix>=31 ? n2ip(bcast) : n2ip(bcast-1),
+    usable: prefix>=31 ? (prefix===31?2:1) : Math.pow(2,32-prefix)-2,
+    prefix
+  };
+};
+
+/* ══════════════════════════════════════════════════
+   UI PRIMITIVES
+══════════════════════════════════════════════════ */
+const WinPanel = ({title,children,titleRight,style,contentStyle}) => (
+  <div className="win-panel" style={style}>
+    <div className="win-titlebar">
+      <span>{title}</span>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        {titleRight}
+        <div className="win-titlebar-btns">
+          <div className="win-titlebar-btn">_</div>
+          <div className="win-titlebar-btn">□</div>
+          <div className="win-titlebar-btn" style={{fontWeight:'bold'}}>✕</div>
+        </div>
+      </div>
+    </div>
+    <div className="win-content" style={contentStyle}>{children}</div>
+  </div>
+);
+
+const Btn = ({onClick,children,cls='',disabled,style}) => (
+  <button className={`btn ${cls}`} onClick={onClick} disabled={disabled} style={{opacity:disabled?.5:1,...style}}>
+    {children}
+  </button>
+);
+
+const Terminal = ({lines,style}) => (
+  <div className="terminal" style={style}>
+    {(lines||[]).join('\n')}
+  </div>
+);
+
+const HR = () => <hr className="hr-groove"/>;
+
+const CopyBtn = ({text,label='COPY'}) => {
+  const [copied,setCopied] = useState(false);
+  const doCopy = async () => {
+    await copyToClipboard(text);
+    setCopied(true);
+    setTimeout(()=>setCopied(false),1500);
+  };
+  return <Btn onClick={doCopy}>{copied?'✓ COPIED':label}</Btn>;
+};
+
+/* ══════════════════════════════════════════════════
+   EVIDENCE LOG (shared state)
+══════════════════════════════════════════════════ */
+const useEvidenceLog = () => {
+  const [entries, setEntries] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('abuse_evidence')||'[]'); } catch { return []; }
+  });
+  const addEntry = useCallback((content, category='NOTE') => {
+    const e = { id: Date.now(), ts: ts(), category, content };
+    setEntries(prev => {
+      const next = [e,...prev];
+      localStorage.setItem('abuse_evidence', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+  const removeEntry = useCallback(id => {
+    setEntries(prev => {
+      const next = prev.filter(e=>e.id!==id);
+      localStorage.setItem('abuse_evidence', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+  const exportAll = useCallback(() => {
+    const txt = entries.map(e=>`[${e.ts}] [${e.category}]\n${e.content}\n${'─'.repeat(60)}`).join('\n');
+    copyToClipboard(txt);
+  }, [entries]);
+  return { entries, addEntry, removeEntry, exportAll };
+};
+
+/* ══════════════════════════════════════════════════
+   TEMPLATES
+══════════════════════════════════════════════════ */
+const DEFAULT_TEMPLATES = {
+  phishing: `Hello,
+
+We are writing to inform you that we have received an abuse report indicating that your hosted service is being used to conduct phishing activity.
+
+This type of activity is in violation of our Acceptable Use Policy. We kindly request that you investigate this matter and remove the offending content within 24 hours of receipt of this notice.
+
+Please reply to this message confirming the actions taken.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+  malware: `Hello,
+
+We have received credible reports that your hosted service is actively distributing malicious software (malware).
+
+The distribution of malware is a serious violation of our Acceptable Use Policy and may also constitute a violation of applicable law. We require immediate remediation of this issue. If no action is taken within 24 hours, we reserve the right to suspend the affected service without further notice.
+
+Please reply to this message confirming the actions taken.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+  spam: `Hello,
+
+We have received multiple abuse complaints indicating that your hosted service is being used as a source of unsolicited bulk email (spam).
+
+This activity is in violation of our Acceptable Use Policy. We ask that you investigate the source of this activity and take immediate corrective action to prevent further occurrences.
+
+Please reply to this message with a summary of the steps taken to resolve this issue.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+  suspension: `Hello,
+
+Due to unresolved abuse complaints associated with your account and a failure to respond within the required timeframe, your service has been suspended pending further investigation.
+
+To request reinstatement, please contact us at abuse@fdcservers.net with a detailed explanation of the steps you have taken to address the reported violations.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+  termination: `Hello,
+
+Following repeated abuse violations and a failure to respond to previous notices, your service has been permanently terminated in accordance with our Acceptable Use Policy.
+
+This decision is final. If you believe this action was taken in error, you may submit a formal appeal to abuse@fdcservers.net within 7 days of this notice.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: URL CHECKER
+══════════════════════════════════════════════════ */
+const URLChecker = ({ addEntry, setReconIP }) => {
+  const [inputText, setInputText] = useState('');
+  const [results, setResults] = useState([]);
+  const [isChecking, setIsChecking] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const checkUrl = async (url) => {
+    try {
+      const res = await fetch('/api/check-url', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({url})
+      });
+      const data = await res.json();
+      if (data.removed===undefined && data.statusCode===undefined)
+        return { url, defanged:defang(url), status:'down', code:'ERR', message:'No result' };
+      if (data.removed)
+        return { url, defanged:defang(url), status:'removed', code:data.statusCode||'N/A', message:data.reason };
+      return { url, defanged:defang(url), status:'up', code:data.statusCode, message:'Reachable' };
+    } catch(e) {
+      return { url, defanged:defang(url), status:'down', code:'ERR', message:e.message };
+    }
+  };
+
+  const handleCheck = async () => {
+    const urls = extractUrls(inputText);
+    if (!urls.length) return alert('No URLs found in input.');
+    setIsChecking(true); setResults([]);
+    const out=[];
+    for (const u of urls) {
+      const r = await checkUrl(u);
+      out.push(r); setResults([...out]);
+      await new Promise(r=>setTimeout(r,500));
+    }
+    setIsChecking(false);
+  };
+
+  const exportResults = () => {
+    const txt = results.map(r=>`${r.status.toUpperCase()} [${r.code}] ${r.defanged}`).join('\n');
+    copyToClipboard(txt); setCopied(true); setTimeout(()=>setCopied(false),1500);
+  };
+
+  const addAllToLog = () => {
+    const txt = results.map(r=>`${r.status.toUpperCase()} | HTTP ${r.code} | ${r.defanged}\n  Normalized: ${r.url}\n  Reason: ${r.message}`).join('\n\n');
+    addEntry(txt, 'URL-CHECK');
+  };
+
+  const statusBadge = s => {
+    if (s==='up')      return <span className="badge badge-green">▲ UP</span>;
+    if (s==='removed') return <span className="badge badge-purple">✕ REMOVED</span>;
+    return <span className="badge badge-red">▼ DOWN</span>;
+  };
+
+  return (
+    <div>
+      <div style={{marginBottom:8}}>
+        <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',letterSpacing:'.05em'}}>
+          Paste Abuse Report / Raw Text:
+        </label>
+        <textarea
+          className="win-textarea"
+          rows={7}
+          value={inputText}
+          onChange={e=>setInputText(e.target.value)}
+          placeholder="Paste abuse report here. Defanged URLs (hxxp://, [.]) are auto-normalized."
+          style={{marginTop:4}}
+        />
+      </div>
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:8}}>
+        <Btn cls="btn-blue" onClick={handleCheck} disabled={isChecking}>
+          {isChecking ? '⏳ CHECKING...' : '▶ CHECK URLS'}
+        </Btn>
+        {results.length>0 && <>
+          <Btn onClick={exportResults}>{copied?'✓ COPIED':'📋 EXPORT ALL'}</Btn>
+          <Btn cls="btn-green" onClick={addAllToLog}>+ ADD ALL TO LOG</Btn>
+        </>}
+      </div>
+
+      {results.length > 0 && (
+        <WinPanel title={`RESULTS — ${results.length} URLs`}>
+          <div style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'center',gap:'2px 8px',fontFamily:'Courier New',fontSize:11,fontWeight:'bold',padding:'4px 6px',background:'#000080',color:'#fff',marginBottom:4}}>
+            <span>STATUS</span><span>DEFANGED URL / NORMALIZED</span><span>HTTP</span><span>ACTIONS</span>
+          </div>
+          {results.map((r,i)=>(
+            <div key={i} className="result-row" style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'start',gap:'4px 8px'}}>
+              <div style={{paddingTop:2}}>{statusBadge(r.status)}</div>
+              <div>
+                <div style={{fontFamily:'Courier New',fontSize:11,wordBreak:'break-all',color:'#000080'}}>{r.defanged}</div>
+                <div style={{fontFamily:'Courier New',fontSize:10,color:'#808080',wordBreak:'break-all'}}>{r.url}</div>
+                <div style={{fontSize:10,color:'#666',marginTop:2}}>{r.message}</div>
+              </div>
+              <div style={{fontFamily:'Courier New',fontWeight:'bold',fontSize:12,color: r.code==='ERR'?'#880000':'#000080'}}>{r.code}</div>
+              <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                <CopyBtn text={r.defanged} label="CPY"/>
+                <Btn style={{fontSize:10,padding:'2px 6px'}} onClick={()=>addEntry(`URL-CHECK | ${r.status.toUpperCase()} | HTTP ${r.code}\nDefanged: ${r.defanged}\nNormalized: ${r.url}\nReason: ${r.message}`,'URL')}>LOG</Btn>
+              </div>
+            </div>
+          ))}
+        </WinPanel>
+      )}
+
+      {isChecking && (
+        <div style={{textAlign:'center',padding:16}}>
+          <span className="blink" style={{fontFamily:'Courier New',fontSize:14,color:'#0000aa',fontWeight:'bold'}}>
+            ■ CHECKING URLS SEQUENTIALLY... ■
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: HEADER ANALYZER
+══════════════════════════════════════════════════ */
+const HeaderAnalyzer = ({ addEntry, setReconIP }) => {
+  const [rawHeaders, setRawHeaders] = useState('');
+  const [analysis, setAnalysis] = useState(null);
+
+  const parseHeaders = () => {
+    const h = rawHeaders;
+    const receivedIPs = [];
+    const receivedLines = h.match(/^Received:[\s\S]*?(?=^\S)/gim)||[];
+    receivedLines.forEach(line=>{
+      const ips = line.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[];
+      ips.forEach(ip=>{ if(!receivedIPs.includes(ip)) receivedIPs.push(ip); });
+    });
+
+    const get = (pattern) => { const m = h.match(pattern); return m ? m[1].trim() : null; };
+    const spf   = get(/spf=(\S+)/i);
+    const dkim  = get(/dkim=(\S+)/i);
+    const dmarc = get(/dmarc=(\S+)/i);
+
+    const fromM    = get(/^From:.*?<([^>]+)>/im) || get(/^From:\s*(\S+@\S+)/im);
+    const replyToM = get(/^Reply-To:.*?<([^>]+)>/im) || get(/^Reply-To:\s*(\S+@\S+)/im);
+    const fromDomain    = fromM    ? fromM.split('@')[1]    : null;
+    const replyToDomain = replyToM ? replyToM.split('@')[1] : null;
+    const spoofWarning  = fromDomain && replyToDomain && fromDomain.toLowerCase()!==replyToDomain.toLowerCase();
+
+    const subjectM = get(/^Subject:\s*(.*)/im);
+
+    setAnalysis({ receivedIPs, spf, dkim, dmarc, from:fromM, replyTo:replyToM, spoofWarning, subject:subjectM });
+  };
+
+  const authBadge = (label, val) => {
+    if (!val) return <span className="badge badge-gray">{label}: N/A</span>;
+    const pass = val.toLowerCase().startsWith('pass');
+    return <span className={`badge ${pass?'badge-green':'badge-red'}`}>{label}: {val.toUpperCase()}</span>;
+  };
+
+  return (
+    <div>
+      <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',letterSpacing:'.05em'}}>
+        Raw Email Headers:
+      </label>
+      <textarea className="win-textarea" rows={9} value={rawHeaders}
+        onChange={e=>setRawHeaders(e.target.value)}
+        placeholder="Paste raw email headers here (Received:, From:, Reply-To:, DKIM-Signature:, etc.)"
+        style={{marginTop:4,marginBottom:8}}
+      />
+      <div style={{display:'flex',gap:6,marginBottom:8}}>
+        <Btn cls="btn-blue" onClick={parseHeaders}>▶ ANALYZE HEADERS</Btn>
+        {analysis && <Btn cls="btn-green" onClick={()=>addEntry(`HEADER ANALYSIS\nSubject: ${analysis.subject||'N/A'}\nFrom: ${analysis.from||'N/A'}\nReply-To: ${analysis.replyTo||'N/A'}\nSPF: ${analysis.spf||'N/A'} | DKIM: ${analysis.dkim||'N/A'} | DMARC: ${analysis.dmarc||'N/A'}\nSPOOF: ${analysis.spoofWarning?'YES - MISMATCH':'NO'}\nIPs: ${analysis.receivedIPs.join(', ')}`,'HEADER')}>+ LOG</Btn>}
+      </div>
+
+      {analysis && (
+        <div>
+          {analysis.spoofWarning && (
+            <div style={{background:'#880000',color:'#ffff00',border:'2px solid #ff4444',padding:'6px 10px',marginBottom:8,fontWeight:'bold',fontFamily:'Courier New',fontSize:12}}>
+              ⚠ SPOOFING DETECTED: From domain [{analysis.from?.split('@')[1]}] ≠ Reply-To domain [{analysis.replyTo?.split('@')[1]}]
+            </div>
+          )}
+          <div className="grid-2" style={{gap:8}}>
+            <WinPanel title="AUTH RESULTS">
+              <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                {authBadge('SPF',analysis.spf)}
+                {authBadge('DKIM',analysis.dkim)}
+                {authBadge('DMARC',analysis.dmarc)}
+              </div>
+            </WinPanel>
+            <WinPanel title="SENDER INFO">
+              <div style={{fontFamily:'Courier New',fontSize:11,display:'flex',flexDirection:'column',gap:3}}>
+                <div><span style={{color:'#808080'}}>Subject: </span>{analysis.subject||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>From:    </span>{analysis.from||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>Reply-To:</span><span style={{color:analysis.spoofWarning?'#ff0000':'inherit'}}> {analysis.replyTo||'N/A'}</span></div>
+              </div>
+            </WinPanel>
+          </div>
+          <div style={{marginTop:8}}>
+            <WinPanel title={`RECEIVED CHAIN IPs (${analysis.receivedIPs.length} found)`}>
+              {analysis.receivedIPs.length===0
+                ? <span style={{color:'#808080',fontFamily:'Courier New',fontSize:11}}>No IPs extracted.</span>
+                : <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                    {analysis.receivedIPs.map((ip,i)=>(
+                      <div key={i} style={{display:'flex',gap:4,alignItems:'center'}}>
+                        <span className="badge badge-blue">{ip}</span>
+                        <Btn style={{fontSize:10,padding:'1px 6px'}} onClick={()=>setReconIP(ip)}>→ RECON</Btn>
+                      </div>
+                    ))}
+                  </div>
+              }
+            </WinPanel>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: IP RECON
+══════════════════════════════════════════════════ */
+const IPRecon = ({ reconIP, setReconIP }) => {
+  const [ip, setIp] = useState(reconIP||'');
+
+  useEffect(()=>{ if(reconIP){ setIp(reconIP); } }, [reconIP]);
+
+  const lines = ip ? [
+    `# ── WHOIS ──────────────────────────────`,
+    `whois ${ip}`,
+    ``,
+    `# ── RDAP ───────────────────────────────`,
+    `curl -s https://rdap.arin.net/registry/ip/${ip} | python3 -m json.tool`,
+    `curl -s https://rdap.db.ripe.net/ip/${ip} | python3 -m json.tool`,
+    ``,
+    `# ── BGP / ROUTING ───────────────────────`,
+    `# https://bgpview.io/ip/${ip}`,
+    `# https://bgp.he.net/ip/${ip}`,
+    `# https://stat.ripe.net/widget/prefix-overview#w.resource=${ip}`,
+    ``,
+    `# ── ABUSEIPDB ───────────────────────────`,
+    `curl -s -G https://api.abuseipdb.com/api/v2/check \\`,
+    `  --data-urlencode "ipAddress=${ip}" \\`,
+    `  -d maxAgeInDays=90 \\`,
+    `  -H "Key: YOUR_API_KEY" \\`,
+    `  -H "Accept: application/json" | python3 -m json.tool`,
+    ``,
+    `# ── SHODAN ──────────────────────────────`,
+    `shodan host ${ip}`,
+    `shodan search --fields ip_str,port,org,hostnames "ip:${ip}"`,
+    ``,
+    `# ── REVERSE DNS ─────────────────────────`,
+    `dig -x ${ip} +short`,
+    `host ${ip}`,
+    ``,
+    `# ── GEOLOCATION ──────────────────────────`,
+    `curl -s https://ipapi.co/${ip}/json/ | python3 -m json.tool`,
+    `curl -s https://ip-api.com/json/${ip} | python3 -m json.tool`,
+  ] : ['# Enter an IP address above to generate recon commands'];
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:8,alignItems:'center'}}>
+        <input className="win-input" style={{fontFamily:'Courier New',maxWidth:220}}
+          value={ip} onChange={e=>setIp(e.target.value)}
+          placeholder="e.g. 192.168.1.1"
+        />
+        <Btn onClick={()=>setReconIP(ip)}>▶ LOAD</Btn>
+        <CopyBtn text={lines.join('\n')} label="COPY ALL"/>
+      </div>
+      <Terminal lines={lines} style={{minHeight:300}}/>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: PTR / RDNS
+══════════════════════════════════════════════════ */
+const PTRTool = () => {
+  const [inputText, setInputText] = useState('');
+  const [ips, setIPs] = useState([]);
+
+  const extract = () => {
+    const found = extractIPs(inputText);
+    setIPs(found);
+  };
+
+  const lines = ips.length ? ips.flatMap(ip=>[
+    `# ── ${ip} ──`,
+    `dig -x ${ip} +short`,
+    `host ${ip}`,
+    `nslookup ${ip}`,
+    `nslookup ${ip} 8.8.8.8`,
+    ``
+  ]) : ['# Paste text above and click EXTRACT IPs'];
+
+  return (
+    <div>
+      <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase'}}>Input Text (IPs will be extracted):</label>
+      <textarea className="win-textarea" rows={4} value={inputText}
+        onChange={e=>setInputText(e.target.value)}
+        placeholder="Paste any text containing IP addresses..."
+        style={{marginTop:4,marginBottom:8}}
+      />
+      <div style={{display:'flex',gap:6,marginBottom:8}}>
+        <Btn cls="btn-blue" onClick={extract}>▶ EXTRACT IPs</Btn>
+        {ips.length>0 && <CopyBtn text={lines.join('\n')}/>}
+      </div>
+      {ips.length>0 && (
+        <div style={{marginBottom:8}}>
+          <span style={{fontSize:11,fontWeight:'bold'}}>Found {ips.length} IP(s): </span>
+          {ips.map((ip,i)=><span key={i} className="badge badge-blue" style={{marginRight:4}}>{ip}</span>)}
+        </div>
+      )}
+      <Terminal lines={lines} style={{minHeight:200}}/>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: SUBNET CALCULATOR
+══════════════════════════════════════════════════ */
+const SubnetCalc = () => {
+  const [cidr, setCidr] = useState('');
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+
+  const calc = () => {
+    const r = calcSubnet(cidr.trim());
+    if (!r) { setError('Invalid CIDR notation. Example: 192.168.1.0/24'); setResult(null); }
+    else { setResult(r); setError(''); }
+  };
+
+  const rows = result ? [
+    ['Network Address',   result.network],
+    ['Subnet Mask',       result.netmask],
+    ['Broadcast Address', result.broadcast],
+    ['First Host',        result.firstHost],
+    ['Last Host',         result.lastHost],
+    ['Usable Hosts',      result.usable.toLocaleString()],
+    ['Prefix Length',     `/${result.prefix}`],
+    ['Total Addresses',   Math.pow(2,32-result.prefix).toLocaleString()],
+  ] : [];
+
+  const lines = result ? [
+    `Network:   ${result.network}/${result.prefix}`,
+    `Netmask:   ${result.netmask}`,
+    `Broadcast: ${result.broadcast}`,
+    `First IP:  ${result.firstHost}`,
+    `Last IP:   ${result.lastHost}`,
+    `Usable:    ${result.usable.toLocaleString()} hosts`,
+  ] : [];
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:8}}>
+        <input className="win-input" style={{maxWidth:220}} value={cidr}
+          onChange={e=>setCidr(e.target.value)} placeholder="e.g. 10.0.0.0/8"
+          onKeyDown={e=>e.key==='Enter'&&calc()}
+        />
+        <Btn cls="btn-blue" onClick={calc}>▶ CALCULATE</Btn>
+        {result && <CopyBtn text={lines.join('\n')}/>}
+      </div>
+      {error && <div style={{color:'#880000',fontWeight:'bold',marginBottom:8,fontFamily:'Courier New',fontSize:12}}>{error}</div>}
+      {result && (
+        <div>
+          <div style={{border:'2px solid #808080',background:'#fff',marginBottom:8}}>
+            <div style={{background:'#000080',color:'#fff',padding:'3px 8px',fontWeight:'bold',fontSize:12,fontFamily:'Courier New'}}>
+              SUBNET: {cidr.trim()}
+            </div>
+            {rows.map(([label,val],i)=>(
+              <div key={i} style={{display:'grid',gridTemplateColumns:'180px 1fr',borderBottom:'1px solid #C0C0C0',background:i%2?'#f8f8f8':'#fff'}}>
+                <div style={{padding:'4px 8px',fontWeight:'bold',fontSize:11,borderRight:'1px solid #C0C0C0',color:'#000080',textTransform:'uppercase'}}>{label}</div>
+                <div style={{padding:'4px 8px',fontFamily:'Courier New',fontSize:12}}>{val}</div>
+              </div>
+            ))}
+          </div>
+          <Terminal lines={lines}/>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: NETWORK CONFIG GENERATOR
+══════════════════════════════════════════════════ */
+const NetConfigGen = () => {
+  const [iface,  setIface]  = React.useState('eth0');
+  const [cidr,   setCidr]   = React.useState('');
+  const [os,     setOs]     = React.useState('ubuntu');
+  const [result, setResult] = React.useState(null);
+  const [error,  setError]  = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+
+  const ipToNum = ip => ip.split('.').reduce((a,b)=>(a<<8)|parseInt(b),0)>>>0;
+  const numToIp = n => [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.');
+
+  const parse = () => {
+    const raw = cidr.trim();
+    const match = raw.match(/^(\d+\.\d+\.\d+\.\d+)\/(\d+)$/);
+    if (!match) { setError('Invalid format. Example: 50.7.60.12/29'); setResult(null); return; }
+    const ip   = match[1];
+    const prefix = parseInt(match[2]);
+    if (prefix < 0 || prefix > 32) { setError('Prefix must be 0–32'); setResult(null); return; }
+    const ipNum      = ipToNum(ip);
+    const mask       = prefix === 0 ? 0 : (0xFFFFFFFF << (32 - prefix)) >>> 0;
+    const netNum     = (ipNum & mask) >>> 0;
+    const bcastNum   = (netNum | (~mask >>> 0)) >>> 0;
+    const gatewayNum = ipNum - 1;
+    const netmask    = numToIp(mask);
+    const gateway    = numToIp(gatewayNum);
+    const broadcast  = numToIp(bcastNum);
+    // usable = ip through last host (ip-1 = gateway, so usable starts at ip)
+    const usable = [];
+    for (let i = ipNum; i < bcastNum; i++) usable.push(numToIp(i));
+    setError('');
+    setResult({ ip, prefix, netmask, gateway, broadcast, usable, netNum: numToIp(netNum) });
+  };
+
+  const genConfig = () => {
+    if (!result) return [];
+    const { ip, prefix, netmask, gateway } = result;
+    const DNS1 = '1.1.1.1';
+    const DNS2 = '8.8.8.8';
+    if (os === 'debian') return [
+      `# /etc/network/interfaces`,
+      `# Debian — ifupdown`,
+      ``,
+      `auto lo`,
+      `iface lo inet loopback`,
+      ``,
+      `auto ${iface}`,
+      `iface ${iface} inet static`,
+      `    address ${ip}/${prefix}`,
+      `    netmask ${netmask}`,
+      `    gateway ${gateway}`,
+      `    dns-nameservers ${DNS1} ${DNS2}`,
+      ``,
+      `# ── Apply ────────────────────────────────`,
+      `ifdown ${iface} && ifup ${iface}`,
+    ];
+    if (os === 'ubuntu') return [
+      `# /etc/netplan/00-${iface}.yaml`,
+      `# Ubuntu — Netplan (NetworkManager or systemd-networkd)`,
+      ``,
+      `network:`,
+      `  version: 2`,
+      `  ethernets:`,
+      `    ${iface}:`,
+      `      dhcp4: false`,
+      `      addresses:`,
+      `        - ${ip}/${prefix}`,
+      `      routes:`,
+      `        - to: default`,
+      `          via: ${gateway}`,
+      `      nameservers:`,
+      `        addresses: [${DNS1}, ${DNS2}]`,
+      ``,
+      `# ── Apply ────────────────────────────────`,
+      `netplan apply`,
+    ];
+    if (os === 'rhel-nmcli') return [
+      `# RHEL / AlmaLinux / Rocky — nmcli`,
+      ``,
+      `nmcli con add type ethernet ifname ${iface} con-name ${iface}`,
+      `nmcli con mod ${iface} ipv4.method manual \\`,
+      `    ipv4.addresses ${ip}/${prefix} \\`,
+      `    ipv4.gateway ${gateway} \\`,
+      `    ipv4.dns "${DNS1} ${DNS2}"`,
+      `nmcli con up ${iface}`,
+      ``,
+      `# ── Verify ───────────────────────────────`,
+      `nmcli con show ${iface}`,
+      `ip addr show ${iface}`,
+    ];
+    if (os === 'rhel-file') return [
+      `# /etc/sysconfig/network-scripts/ifcfg-${iface}`,
+      `# RHEL / AlmaLinux / Rocky — legacy ifcfg`,
+      ``,
+      `TYPE=Ethernet`,
+      `BOOTPROTO=none`,
+      `NAME=${iface}`,
+      `DEVICE=${iface}`,
+      `ONBOOT=yes`,
+      `IPADDR=${ip}`,
+      `PREFIX=${prefix}`,
+      `GATEWAY=${gateway}`,
+      `DNS1=${DNS1}`,
+      `DNS2=${DNS2}`,
+      ``,
+      `# ── Apply ────────────────────────────────`,
+      `nmcli con reload`,
+      `nmcli con up ${iface}`,
+    ];
+    if (os === 'systemd-networkd') return [
+      `# /etc/systemd/network/10-${iface}.network`,
+      `# systemd-networkd`,
+      ``,
+      `[Match]`,
+      `Name=${iface}`,
+      ``,
+      `[Network]`,
+      `Address=${ip}/${prefix}`,
+      `Gateway=${gateway}`,
+      `DNS=${DNS1}`,
+      `DNS=${DNS2}`,
+      ``,
+      `# ── Apply ────────────────────────────────`,
+      `systemctl restart systemd-networkd`,
+      `networkctl status ${iface}`,
+    ];
+    return [];
+  };
+
+  const lines = genConfig();
+
+  const doCopy = () => {
+    const txt = lines.join('\n');
+    const el = document.createElement('textarea');
+    el.value = txt; document.body.appendChild(el);
+    el.select(); document.execCommand('copy');
+    document.body.removeChild(el);
+    setCopied(true); setTimeout(()=>setCopied(false),1500);
+  };
+
+  const OS_OPTS = [
+    { id:'ubuntu',            label:'Ubuntu (Netplan)' },
+    { id:'debian',            label:'Debian (interfaces)' },
+    { id:'rhel-nmcli',        label:'RHEL/Alma/Rocky (nmcli)' },
+    { id:'rhel-file',         label:'RHEL/Alma/Rocky (ifcfg)' },
+    { id:'systemd-networkd',  label:'systemd-networkd' },
+  ];
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:8,flexWrap:'wrap',alignItems:'flex-end'}}>
+        <div>
+          <div style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',marginBottom:3}}>Interface</div>
+          <input className="win-input" style={{width:110}} value={iface}
+            onChange={e=>setIface(e.target.value)} placeholder="eth0"
+            onKeyDown={e=>e.key==='Enter'&&parse()}
+          />
+        </div>
+        <div>
+          <div style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',marginBottom:3}}>IP / CIDR</div>
+          <input className="win-input" style={{width:180}} value={cidr}
+            onChange={e=>setCidr(e.target.value)} placeholder="50.7.60.12/29"
+            onKeyDown={e=>e.key==='Enter'&&parse()}
+          />
+        </div>
+        <Btn cls="btn-blue" onClick={parse}>▶ GENERATE</Btn>
+        {lines.length > 0 && (
+          <Btn cls={copied?'btn-green':''} onClick={doCopy}>{copied?'✓ COPIED':'📋 COPY'}</Btn>
+        )}
+      </div>
+
+      <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
+        {OS_OPTS.map(o=>(
+          <Btn key={o.id} cls={os===o.id?'btn-blue':''} onClick={()=>setOs(o.id)}>{o.label}</Btn>
+        ))}
+      </div>
+
+      {error && <div style={{color:'#880000',fontWeight:'bold',marginBottom:8,fontFamily:'Courier New',fontSize:12}}>{error}</div>}
+
+      {result && (
+        <div className="grid-2" style={{gap:8}}>
+          <div>
+            <div style={{border:'2px solid #808080',background:'#fff',marginBottom:8}}>
+              <div style={{background:'#000080',color:'#fff',padding:'3px 8px',fontWeight:'bold',fontSize:12,fontFamily:'Courier New'}}>
+                NETWORK INFO
+              </div>
+              {[
+                ['Assigned IP',  `${result.ip}/${result.prefix}`],
+                ['Netmask',      result.netmask],
+                ['Gateway',      result.gateway],
+                ['Broadcast',    result.broadcast],
+                ['DNS',          '1.1.1.1, 8.8.8.8'],
+                ['Usable IPs',   result.usable.join(', ')],
+              ].map(([label,val],i)=>(
+                <div key={i} style={{display:'grid',gridTemplateColumns:'130px 1fr',borderBottom:'1px solid #C0C0C0',background:i%2?'#f8f8f8':'#fff'}}>
+                  <div style={{padding:'4px 8px',fontWeight:'bold',fontSize:11,borderRight:'1px solid #C0C0C0',color:'#000080',textTransform:'uppercase'}}>{label}</div>
+                  <div style={{padding:'4px 8px',fontFamily:'Courier New',fontSize:11,wordBreak:'break-all'}}>{val}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <Terminal lines={lines} style={{minHeight:220}}/>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: PORT SCAN GENERATOR
+══════════════════════════════════════════════════ */
+const PortScanGen = () => {
+  const [ip, setIp] = useState('');
+  const [target, setTarget] = useState('');
+
+  const gen = () => setTarget(ip.trim());
+
+  const lines = target ? [
+    `# TARGET: ${target}`,
+    ``,
+    `# ── QUICK SCAN (Top 1000 ports) ────────`,
+    `nmap -T4 -F ${target}`,
+    ``,
+    `# ── FULL TCP SCAN (All 65535 ports) ────`,
+    `nmap -sS -T4 -p- ${target}`,
+    `nmap -sT -T4 -p- ${target}  # Non-root fallback`,
+    ``,
+    `# ── UDP SCAN (Common UDP ports) ─────────`,
+    `nmap -sU -T4 --top-ports 200 ${target}`,
+    `nmap -sU -p 53,67,68,69,123,161,500,514 ${target}`,
+    ``,
+    `# ── SERVICE & VERSION DETECTION ─────────`,
+    `nmap -sV -sC -T4 -p- ${target}`,
+    `nmap -sV --version-intensity 9 -T4 ${target}`,
+    ``,
+    `# ── OS DETECTION ─────────────────────────`,
+    `nmap -O -T4 ${target}`,
+    `nmap -A -T4 ${target}  # Aggressive (OS+scripts+traceroute)`,
+    ``,
+    `# ── VULNERABILITY SCRIPTS ────────────────`,
+    `nmap --script vuln -T4 -p- ${target}`,
+    `nmap --script=http-vuln*,ssl*,smb-vuln* -T4 ${target}`,
+    `nmap --script exploit -T4 ${target}`,
+    ``,
+    `# ── SPECIFIC PORT TARGETS ─────────────────`,
+    `nmap -sV -p 22,80,443,8080,8443,3306,5432,27017 ${target}`,
+    `nmap -sV -p 21,22,23,25,53,110,143,445,3389 ${target}`,
+    ``,
+    `# ── STEALTH SCAN OPTIONS ──────────────────`,
+    `nmap -sS -T2 --randomize-hosts -D RND:10 -p- ${target}`,
+    `nmap -sF -T2 ${target}  # FIN scan (IDS evasion)`,
+    `nmap -sN -T2 ${target}  # NULL scan (IDS evasion)`,
+  ] : ['# Enter an IP or hostname above to generate nmap commands'];
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:8}}>
+        <input className="win-input" style={{maxWidth:240}} value={ip}
+          onChange={e=>setIp(e.target.value)} placeholder="e.g. 192.168.1.1 or example.com"
+          onKeyDown={e=>e.key==='Enter'&&gen()}
+        />
+        <Btn cls="btn-blue" onClick={gen}>▶ GENERATE</Btn>
+        {target && <CopyBtn text={lines.join('\n')}/>}
+      </div>
+      <Terminal lines={lines} style={{minHeight:340}}/>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: ACL BUILDER
+══════════════════════════════════════════════════ */
+const ACLBuilder = () => {
+  const [input, setInput] = useState('');
+  const [format, setFormat] = useState('iptables');
+
+  const items = input.split('\n').map(s=>s.trim()).filter(Boolean);
+
+  const genIPTables = () => {
+    if (!items.length) return ['# Enter IPs or CIDRs above (one per line)'];
+    return [
+      `# ── BLOCK RULES ─────────────────────────`,
+      ...items.map(ip=>`iptables -I INPUT -s ${ip} -j DROP`),
+      `iptables -I FORWARD -s ${ip_placeholder} -j DROP`,
+      ``,
+      `# ── SAVE RULES ──────────────────────────`,
+      `iptables-save > /etc/iptables/rules.v4`,
+      `service iptables save`,
+      ``,
+      `# ── REMOVE RULES ────────────────────────`,
+      ...items.map(ip=>`iptables -D INPUT -s ${ip} -j DROP`),
+      ``,
+      `# ── VERIFY ───────────────────────────────`,
+      `iptables -L INPUT -n --line-numbers | grep DROP`,
+    ].map(l=>l.replace('${ip_placeholder}', items[0]||'<IP>'));
+  };
+
+  const genNFTables = () => {
+    if (!items.length) return ['# Enter IPs or CIDRs above'];
+    return [
+      `# ── CREATE SET & ADD RULES ───────────────`,
+      `nft add table inet abuse_block`,
+      `nft add chain inet abuse_block input '{ type filter hook input priority 0; policy accept; }'`,
+      `nft add set inet abuse_block blocklist '{ type ipv4_addr; flags interval; }'`,
+      ``,
+      `# ── ADD IPs TO SET ───────────────────────`,
+      ...items.map(ip=>`nft add element inet abuse_block blocklist { ${ip} }`),
+      ``,
+      `# ── APPLY RULE ───────────────────────────`,
+      `nft add rule inet abuse_block input ip saddr @blocklist drop`,
+      ``,
+      `# ── LIST / VERIFY ────────────────────────`,
+      `nft list set inet abuse_block blocklist`,
+      `nft list ruleset`,
+      ``,
+      `# ── REMOVE ───────────────────────────────`,
+      ...items.map(ip=>`nft delete element inet abuse_block blocklist { ${ip} }`),
+    ];
+  };
+
+  const genUFW = () => {
+    if (!items.length) return ['# Enter IPs or CIDRs above'];
+    return [
+      `# ── BLOCK ───────────────────────────────`,
+      ...items.map(ip=>`ufw deny from ${ip} to any`),
+      ``,
+      `# ── VERIFY ──────────────────────────────`,
+      `ufw status numbered`,
+      ``,
+      `# ── REMOVE (use rule number from status) ──`,
+      ...items.map((_,i)=>`ufw delete <rule_number_for_${items[i]}>`),
+      ``,
+      `# ── RELOAD ──────────────────────────────`,
+      `ufw reload`,
+    ];
+  };
+
+  const lines = format==='iptables' ? genIPTables() : format==='nftables' ? genNFTables() : genUFW();
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:8,alignItems:'center',flexWrap:'wrap'}}>
+        <span style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase'}}>Format:</span>
+        {['iptables','nftables','ufw'].map(f=>(
+          <Btn key={f} cls={format===f?'btn-blue':''} onClick={()=>setFormat(f)}>{f}</Btn>
+        ))}
+        <CopyBtn text={lines.join('\n')}/>
+      </div>
+      <div className="grid-2" style={{gap:8}}>
+        <div>
+          <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',display:'block',marginBottom:4}}>IPs / CIDRs (one per line):</label>
+          <textarea className="win-textarea" rows={12} value={input}
+            onChange={e=>setInput(e.target.value)}
+            placeholder={"192.168.1.1\n10.0.0.0/8\n2001:db8::1"}
+          />
+          <div style={{marginTop:4,fontSize:11,color:'#808080'}}>{items.length} entr{items.length===1?'y':'ies'}</div>
+        </div>
+        <Terminal lines={lines} style={{minHeight:220,height:'100%'}}/>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: RESPONSE GENERATOR + TEMPLATES
+══════════════════════════════════════════════════ */
+const ResponseGenerator = ({ addEntry }) => {
+  const [templates, setTemplates] = useState(()=>{
+    try { return JSON.parse(localStorage.getItem('abuse_templates')||JSON.stringify(DEFAULT_TEMPLATES)); }
+    catch { return DEFAULT_TEMPLATES; }
+  });
+  const [selectedTpl, setSelectedTpl] = useState('phishing');
+  const [editingTpl, setEditingTpl] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [response, setResponse] = useState('');
+  const [ticketAge, setTicketAge] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const ESCALATIONS = {
+    '24h': `Hello,
+
+This is a follow-up to our previous abuse notice. As of the time of this message, we have not received a response or confirmation of remediation.
+
+We ask that you respond within 24 hours with an update on the steps taken to resolve this matter. Failure to do so may result in suspension of the affected service.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+    '48h': `Hello,
+
+As 48 hours have elapsed since our initial abuse notice without a satisfactory response or resolution, the affected service has been suspended pending investigation.
+
+To have your service reinstated, please contact us at abuse@fdcservers.net with confirmation of the corrective actions taken.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+    '72h': `Hello,
+
+As 72 hours have passed since our initial abuse notice without adequate response or resolution, and following the suspension of your service, we have proceeded with permanent termination of the affected service in accordance with our Acceptable Use Policy.
+
+If you wish to dispute this decision, please contact abuse@fdcservers.net within 7 days of this notice.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+    'resolved': `Hello,
+
+Thank you for your prompt attention to this matter. We have verified that the reported content has been removed and the issue has been resolved to our satisfaction.
+
+This ticket is now closed. Please do not hesitate to contact us should you have any further questions.
+
+--
+FDCServers Abuse Department
+abuse@fdcservers.net`,
+  };
+
+  const useTemplate = () => { setResponse(templates[selectedTpl]||''); };
+  const useEscalation = () => { if(ticketAge) setResponse(ESCALATIONS[ticketAge]||''); };
+
+  const saveTemplate = () => {
+    const updated = {...templates, [selectedTpl]:editingTpl};
+    setTemplates(updated);
+    localStorage.setItem('abuse_templates',JSON.stringify(updated));
+    setEditMode(false);
+  };
+
+  const doCopy = async() => {
+    await copyToClipboard(response);
+    setCopied(true); setTimeout(()=>setCopied(false),1500);
+  };
+
+  return (
+    <div>
+      <div className="grid-2" style={{gap:8,marginBottom:8}}>
+        <WinPanel title="TEMPLATES">
+          <div style={{marginBottom:8}}>
+            <select className="win-select" style={{width:'100%',marginBottom:4}}
+              value={selectedTpl} onChange={e=>{setSelectedTpl(e.target.value);setEditMode(false);}}>
+              {Object.keys(templates).map(k=>(
+                <option key={k} value={k}>{k.toUpperCase()}</option>
+              ))}
+            </select>
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              <Btn cls="btn-blue" onClick={useTemplate}>USE</Btn>
+              <Btn onClick={()=>{setEditingTpl(templates[selectedTpl]||'');setEditMode(!editMode);}}>
+                {editMode?'CANCEL':'EDIT'}
+              </Btn>
+              {editMode && <Btn cls="btn-green" onClick={saveTemplate}>SAVE</Btn>}
+            </div>
+          </div>
+          {editMode && (
+            <textarea className="win-textarea" rows={8} value={editingTpl}
+              onChange={e=>setEditingTpl(e.target.value)}/>
+          )}
+          {!editMode && (
+            <div className="terminal" style={{fontSize:11,minHeight:80,whiteSpace:'pre-wrap'}}>
+              {templates[selectedTpl]||''}
+            </div>
+          )}
+        </WinPanel>
+
+        <WinPanel title="ESCALATION SHORTCUTS">
+          <div style={{marginBottom:8}}>
+            <select className="win-select" style={{width:'100%',marginBottom:4}}
+              value={ticketAge} onChange={e=>setTicketAge(e.target.value)}>
+              <option value="">-- Select Escalation --</option>
+              <option value="24h">24h — Follow-up Reminder</option>
+              <option value="48h">48h — Suspension Notice</option>
+              <option value="72h">72h — Termination Notice</option>
+              <option value="resolved">Resolved — Close Ticket</option>
+            </select>
+            <Btn cls="btn-blue" onClick={useEscalation} disabled={!ticketAge}>▶ LOAD ESCALATION</Btn>
+          </div>
+          <HR/>
+          <div style={{fontSize:11,color:'#808080',lineHeight:1.6}}>
+            <div>■ 24h → Reminder to customer</div>
+            <div>■ 48h → Service suspended</div>
+            <div>■ 72h → Service terminated</div>
+            <div>■ Resolved → Close ticket</div>
+          </div>
+        </WinPanel>
+      </div>
+
+      <WinPanel title="RESPONSE EDITOR">
+        <textarea className="win-textarea" rows={12} value={response}
+          onChange={e=>setResponse(e.target.value)}
+          placeholder="Select a template or escalation above, or type your response here..."
+        />
+        <div style={{display:'flex',gap:6,marginTop:6,flexWrap:'wrap'}}>
+          <Btn cls="btn-blue" onClick={doCopy}>{copied?'✓ COPIED':'📋 COPY TO CLIPBOARD'}</Btn>
+          <Btn cls="btn-green" onClick={()=>addEntry(response,'RESPONSE')}>+ ADD TO EVIDENCE LOG</Btn>
+          <Btn onClick={()=>setResponse('')}>CLEAR</Btn>
+        </div>
+      </WinPanel>
+    </div>
+  );
+};
+
+
+/* ══════════════════════════════════════════════════
+   TOOL: WHOIS LOOKUP
+══════════════════════════════════════════════════ */
+const WhoisLookup = () => {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const lookup = async () => {
+    const q = query.trim();
+    if (!q) return;
+    setLoading(true); setResult(null); setError('');
+    try {
+      // Use RDAP for IPs, whois.arin.net JSON for domains
+      const isIP = /^\d{1,3}(\.\d{1,3}){3}$/.test(q);
+      let url = isIP
+        ? `https://rdap.arin.net/registry/ip/${q}`
+        : `https://rdap.verisign.com/com/v1/domain/${q}`;
+      let res = await fetch(url);
+      if (!res.ok && !isIP) {
+        // fallback to IANA RDAP bootstrap
+        res = await fetch(`https://rdap.org/domain/${q}`);
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setResult({ raw: data, isIP, query: q });
+    } catch(e) {
+      setError(`RDAP lookup failed: ${e.message}. Use: whois ${q}`);
+    }
+    setLoading(false);
+  };
+
+  const renderIP = (d) => {
+    const name   = d.name || 'N/A';
+    const handle = d.handle || 'N/A';
+    const org    = d.entities?.find(e=>e.roles?.includes('registrant'));
+    const orgName= org?.vcardArray?.[1]?.find(v=>v[0]==='fn')?.[3] || org?.handle || 'N/A';
+    const abuse  = d.entities?.flatMap(e=>e.entities||[]).find(e=>e.roles?.includes('abuse'));
+    const abuseEmail = abuse?.vcardArray?.[1]?.find(v=>v[0]==='email')?.[3] || 'N/A';
+    const country= d.country || 'N/A';
+    const startAddr = d.startAddress || 'N/A';
+    const endAddr   = d.endAddress   || 'N/A';
+    const cidr   = d.cidr0_cidrs?.[0] ? `${d.cidr0_cidrs[0].v4prefix}/${d.cidr0_cidrs[0].length}` : 'N/A';
+    const rows = [
+      ['Handle', handle], ['Name', name], ['Organization', orgName],
+      ['Country', country], ['CIDR', cidr],
+      ['Start IP', startAddr], ['End IP', endAddr],
+      ['Abuse Contact', abuseEmail],
+    ];
+    return rows;
+  };
+
+  const renderDomain = (d) => {
+    const registrant = d.entities?.find(e=>e.roles?.includes('registrant'));
+    const registrar  = d.entities?.find(e=>e.roles?.includes('registrar'));
+    const getVcard = (e, field) => e?.vcardArray?.[1]?.find(v=>v[0]===field)?.[3] || 'N/A';
+    const events = {};
+    (d.events||[]).forEach(ev=>{ events[ev.eventAction]=ev.eventDate?.slice(0,10)||'N/A'; });
+    const rows = [
+      ['Domain', d.ldhName || d.unicodeName || 'N/A'],
+      ['Status', (d.status||[]).join(', ') || 'N/A'],
+      ['Registrar', getVcard(registrar,'fn')],
+      ['Registrant', getVcard(registrant,'fn')],
+      ['Registrant Email', getVcard(registrant,'email')],
+      ['Registered', events['registration'] || 'N/A'],
+      ['Updated', events['last changed'] || 'N/A'],
+      ['Expires', events['expiration'] || 'N/A'],
+      ['Nameservers', (d.nameservers||[]).map(n=>n.ldhName).join(', ') || 'N/A'],
+    ];
+    return rows;
+  };
+
+  const rows = result ? (result.isIP ? renderIP(result.raw) : renderDomain(result.raw)) : [];
+  const cmdLine = `whois ${query.trim()}`;
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:8}}>
+        <input className="win-input" style={{maxWidth:300}} value={query}
+          onChange={e=>setQuery(e.target.value)}
+          onKeyDown={e=>e.key==='Enter'&&lookup()}
+          placeholder="e.g. 1.2.3.4 or example.com"
+        />
+        <Btn cls="btn-blue" onClick={lookup} disabled={loading}>
+          {loading ? '⏳ LOOKING UP...' : '▶ WHOIS LOOKUP'}
+        </Btn>
+        {result && <CopyBtn text={rows.map(([k,v])=>`${k}: ${v}`).join('\n')} label="COPY"/>}
+      </div>
+
+      {error && (
+        <div>
+          <div style={{color:'#880000',fontWeight:'bold',marginBottom:8,fontFamily:'Courier New',fontSize:12}}>{error}</div>
+          <Terminal lines={[cmdLine]}/>
+        </div>
+      )}
+
+      {result && (
+        <div className="grid-2" style={{gap:8}}>
+          <div style={{border:'2px solid #808080',background:'#fff'}}>
+            <div style={{background:'#000080',color:'#fff',padding:'3px 8px',fontWeight:'bold',fontSize:12,fontFamily:'Courier New'}}>
+              {result.isIP ? 'IP RDAP RESULT' : 'DOMAIN RDAP RESULT'} — {result.query}
+            </div>
+            {rows.map(([label,val],i)=>(
+              <div key={i} style={{display:'grid',gridTemplateColumns:'160px 1fr',borderBottom:'1px solid #C0C0C0',background:i%2?'#f8f8f8':'#fff'}}>
+                <div style={{padding:'4px 8px',fontWeight:'bold',fontSize:11,borderRight:'1px solid #C0C0C0',color:'#000080',textTransform:'uppercase'}}>{label}</div>
+                <div style={{padding:'4px 8px',fontFamily:'Courier New',fontSize:11,wordBreak:'break-all'}}>{val}</div>
+              </div>
+            ))}
+          </div>
+          <div>
+            <WinPanel title="CLI EQUIVALENT">
+              <Terminal lines={[cmdLine, ``, `# RDAP (JSON):`, `curl -s https://rdap.org/${result.isIP?'ip':'domain'}/${result.query} | python3 -m json.tool`]}/>
+            </WinPanel>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: ABUSE CONTACT FINDER
+══════════════════════════════════════════════════ */
+const AbuseContactFinder = () => {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const lookup = async () => {
+    const q = query.trim();
+    if (!q) return;
+    setLoading(true); setResult(null); setError('');
+    try {
+      const isIP = /^\d{1,3}(\.\d{1,3}){3}$/.test(q);
+      const url = isIP
+        ? `https://rdap.arin.net/registry/ip/${q}`
+        : `https://rdap.org/domain/${q}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      // Walk all entities recursively for abuse contact
+      const allEntities = [];
+      const walk = (entities) => {
+        (entities||[]).forEach(e => { allEntities.push(e); walk(e.entities); });
+      };
+      walk(data.entities);
+
+      const abuseEnt = allEntities.find(e=>e.roles?.includes('abuse'));
+      const getVcard = (e, f) => e?.vcardArray?.[1]?.find(v=>v[0]===f)?.[3];
+      const email  = getVcard(abuseEnt,'email') || 'Not found';
+      const phone  = getVcard(abuseEnt,'tel')   || 'Not found';
+      const name   = getVcard(abuseEnt,'fn')    || abuseEnt?.handle || 'Not found';
+      const org    = allEntities.find(e=>e.roles?.includes('registrant'));
+      const orgName= getVcard(org,'fn') || org?.handle || 'N/A';
+      const handle = data.handle || 'N/A';
+      const netName= data.name   || 'N/A';
+
+      setResult({ email, phone, name, orgName, handle, netName, isIP, query: q });
+    } catch(e) {
+      setError(`Lookup failed: ${e.message}`);
+    }
+    setLoading(false);
+  };
+
+  const found = result && result.email !== 'Not found';
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:8}}>
+        <input className="win-input" style={{maxWidth:300}} value={query}
+          onChange={e=>setQuery(e.target.value)}
+          onKeyDown={e=>e.key==='Enter'&&lookup()}
+          placeholder="e.g. 1.2.3.4 or domain.com"
+        />
+        <Btn cls="btn-blue" onClick={lookup} disabled={loading}>
+          {loading ? '⏳ LOOKING UP...' : '▶ FIND ABUSE CONTACT'}
+        </Btn>
+      </div>
+
+      {error && <div style={{color:'#880000',fontWeight:'bold',fontFamily:'Courier New',fontSize:12,marginBottom:8}}>{error}</div>}
+
+      {result && (
+        <div className="grid-2" style={{gap:8}}>
+          <WinPanel title={`ABUSE CONTACT — ${result.query}`}>
+            <div style={{marginBottom:8}}>
+              <span className={`badge ${found?'badge-green':'badge-red'}`}>
+                {found ? '✓ CONTACT FOUND' : '✕ NO ABUSE CONTACT'}
+              </span>
+            </div>
+            {[
+              ['Organization', result.orgName],
+              ['Network', result.netName],
+              ['Handle', result.handle],
+              ['Abuse Contact Name', result.name],
+              ['Abuse Email', result.email],
+              ['Abuse Phone', result.phone],
+            ].map(([label,val],i)=>(
+              <div key={i} style={{display:'grid',gridTemplateColumns:'160px 1fr',borderBottom:'1px solid #C0C0C0',background:i%2?'#f8f8f8':'#fff'}}>
+                <div style={{padding:'4px 8px',fontWeight:'bold',fontSize:11,borderRight:'1px solid #C0C0C0',color:'#000080',textTransform:'uppercase'}}>{label}</div>
+                <div style={{padding:'4px 8px',fontFamily:'Courier New',fontSize:11,wordBreak:'break-all',color:label==='Abuse Email'&&found?'#000080':'#000'}}>{val}</div>
+              </div>
+            ))}
+            {found && (
+              <div style={{marginTop:8,display:'flex',gap:6}}>
+                <CopyBtn text={result.email} label="COPY EMAIL"/>
+                <CopyBtn text={`To: ${result.email}\nSubject: Abuse Report — ${result.query}\n\nHello,\n\nWe are reporting abuse originating from ${result.query} under your network.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`} label="COPY DRAFT"/>
+              </div>
+            )}
+          </WinPanel>
+          <WinPanel title="CLI LOOKUP">
+            <Terminal lines={[
+              `# RDAP abuse contact lookup:`,
+              `curl -s https://rdap.arin.net/registry/ip/${result.query} \\`,
+              `  | python3 -m json.tool | grep -i abuse`,
+              ``,
+              `# Direct WHOIS:`,
+              `whois ${result.query} | grep -i abuse`,
+              ``,
+              `# ARIN abuse report form:`,
+              `# https://www.arin.net/resources/registry/abuse/`,
+            ]}/>
+          </WinPanel>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: URL DEFANGER / REFANGER
+══════════════════════════════════════════════════ */
+const DefangTool = () => {
+  const [input, setInput] = useState('');
+  const [mode, setMode] = useState('defang');
+
+  const process = (text) => {
+    if (!text.trim()) return '';
+    const lines = text.split('\n');
+    return lines.map(line => {
+      if (mode === 'defang') {
+        return line
+          .replace(/https:\/\//gi, 'hxxps://')
+          .replace(/http:\/\//gi,  'hxxp://')
+          .replace(/\./g, '[.]')
+          .replace(/:/g, '[:]');
+      } else {
+        return line
+          .replace(/hxxps:\/\//gi, 'https://')
+          .replace(/hxxp:\/\//gi,  'http://')
+          .replace(/\[\.\]|\(\.\)/g, '.')
+          .replace(/\[:\]/g, ':');
+      }
+    }).join('\n');
+  };
+
+  const output = process(input);
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:8,alignItems:'center'}}>
+        <span style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase'}}>Mode:</span>
+        <Btn cls={mode==='defang'?'btn-blue':''} onClick={()=>setMode('defang')}>DEFANG (safe for sharing)</Btn>
+        <Btn cls={mode==='refang'?'btn-blue':''} onClick={()=>setMode('refang')}>REFANG (restore URLs)</Btn>
+      </div>
+      <div className="grid-2" style={{gap:8}}>
+        <div>
+          <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',display:'block',marginBottom:4}}>
+            {mode==='defang' ? 'RAW INPUT (live URLs / IPs):' : 'DEFANGED INPUT:'}
+          </label>
+          <textarea className="win-textarea" rows={14} value={input}
+            onChange={e=>setInput(e.target.value)}
+            placeholder={mode==='defang'
+              ? 'https://evil.com/phish\n192.168.1.1'
+              : 'hxxps://evil[.]com/phish\n192[.]168[.]1[.]1'}
+          />
+        </div>
+        <div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+            <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase'}}>
+              {mode==='defang' ? 'DEFANGED OUTPUT:' : 'REFANGED OUTPUT:'}
+            </label>
+            <CopyBtn text={output}/>
+          </div>
+          <div className="terminal" style={{minHeight:242,whiteSpace:'pre-wrap',wordBreak:'break-all'}}>
+            {output || '# Output will appear here'}
+          </div>
+        </div>
+      </div>
+      <div style={{marginTop:8,fontSize:11,color:'#808080',fontFamily:'Courier New'}}>
+        ■ DEFANG: Converts URLs to safe-to-share IOC format (hxxps://, [.], [:]) |
+        ■ REFANG: Restores IOCs to working URLs for analysis
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: BASE64 / URL DECODE
+══════════════════════════════════════════════════ */
+const DecodeTool = () => {
+  const [input, setInput] = useState('');
+  const [mode, setMode] = useState('b64decode');
+
+  const MODES = [
+    { id:'b64decode', label:'Base64 Decode' },
+    { id:'b64encode', label:'Base64 Encode' },
+    { id:'urldecode', label:'URL Decode' },
+    { id:'urlencode', label:'URL Encode' },
+    { id:'hexdecode', label:'Hex Decode' },
+    { id:'htmldecode', label:'HTML Entity Decode' },
+  ];
+
+  const process = () => {
+    const t = input.trim();
+    if (!t) return '';
+    try {
+      switch(mode) {
+        case 'b64decode': {
+          const bin = atob(t);
+          // Try UTF-8 decode
+          try {
+            return decodeURIComponent(escape(bin));
+          } catch { return bin; }
+        }
+        case 'b64encode': return btoa(unescape(encodeURIComponent(t)));
+        case 'urldecode': return decodeURIComponent(t.replace(/\+/g,' '));
+        case 'urlencode': return encodeURIComponent(t);
+        case 'hexdecode': {
+          const hex = t.replace(/\s+/g,'').replace(/^0x/i,'');
+          if (!/^[0-9a-fA-F]+$/.test(hex)) return '⚠ Invalid hex string';
+          let out='';
+          for(let i=0;i<hex.length;i+=2) out+=String.fromCharCode(parseInt(hex.substr(i,2),16));
+          return out;
+        }
+        case 'htmldecode': {
+          const txt = document.createElement('textarea');
+          txt.innerHTML = t;
+          return txt.value;
+        }
+        default: return t;
+      }
+    } catch(e) {
+      return `⚠ Error: ${e.message}`;
+    }
+  };
+
+  const output = process();
+  const isError = output.startsWith('⚠');
+
+  // Detect if output looks like another encoded layer
+  const looksB64 = /^[A-Za-z0-9+/]{16,}={0,2}$/.test(output.trim());
+  const looksUrl = output.includes('%');
+  const layerHint = !isError && (looksB64 ? '■ Output may contain another Base64 layer' : looksUrl ? '■ Output may contain URL-encoded content' : '');
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+        <span style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',marginRight:4}}>Mode:</span>
+        {MODES.map(m=>(
+          <Btn key={m.id} cls={mode===m.id?'btn-blue':''} onClick={()=>setMode(m.id)} style={{fontSize:11,padding:'3px 10px'}}>{m.label}</Btn>
+        ))}
+      </div>
+      <div className="grid-2" style={{gap:8}}>
+        <div>
+          <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',display:'block',marginBottom:4}}>INPUT:</label>
+          <textarea className="win-textarea" rows={14} value={input} onChange={e=>setInput(e.target.value)}
+            placeholder={mode==='b64decode'?'Paste Base64 encoded string...':
+              mode==='urldecode'?'Paste URL-encoded string... (%20, %3A, etc.)':
+              mode==='hexdecode'?'Paste hex string... (0x414243 or 41 42 43)':
+              mode==='htmldecode'?'Paste HTML with entities... (&amp; &lt; etc.)':
+              'Paste text to encode...'}
+          />
+        </div>
+        <div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+            <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase'}}>OUTPUT:</label>
+            {!isError && <CopyBtn text={output}/>}
+          </div>
+          <div className="terminal" style={{minHeight:242,whiteSpace:'pre-wrap',wordBreak:'break-all',color:isError?'#ff4444':'#00ff00'}}>
+            {output || '# Output will appear here'}
+          </div>
+          {layerHint && (
+            <div style={{marginTop:4,fontFamily:'Courier New',fontSize:11,color:'#ffff00',background:'#444400',padding:'3px 6px',border:'1px solid #888800'}}>
+              {layerHint}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: HASH CHECKER
+══════════════════════════════════════════════════ */
+const HashChecker = () => {
+  const [input, setInput] = useState('');
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const HASH_PATTERNS = {
+    MD5:    /\b[a-fA-F0-9]{32}\b/g,
+    SHA1:   /\b[a-fA-F0-9]{40}\b/g,
+    SHA256: /\b[a-fA-F0-9]{64}\b/g,
+    SHA512: /\b[a-fA-F0-9]{128}\b/g,
+  };
+
+  const extractHashes = (text) => {
+    const found = [];
+    const seen = new Set();
+    Object.entries(HASH_PATTERNS).forEach(([type, re]) => {
+      const matches = [...new Set(text.match(re)||[])];
+      matches.forEach(h => {
+        if (!seen.has(h)) { seen.add(h); found.push({ hash: h, type }); }
+      });
+    });
+    return found;
+  };
+
+  const checkHashes = async () => {
+    const hashes = extractHashes(input);
+    if (!hashes.length) { alert('No hashes detected in input.'); return; }
+    setLoading(true);
+    setResults(hashes.map(h => ({ ...h, status: 'checking', vtUrl: null, malicious: null, total: null })));
+
+    const checked = [];
+    for (const h of hashes) {
+      // VirusTotal public API (no key needed for basic lookup via public report URL)
+      const vtUrl = `https://www.virustotal.com/gui/file/${h.hash}`;
+      // We can't call VT API without a key, so we generate the lookup URLs instead
+      const otxUrl = `https://otx.alienvault.com/indicator/file/${h.hash}`;
+      const mbUrl  = `https://www.malwarebazaar.org/browse.php?search[tag]=${h.hash}`;
+      checked.push({ ...h, status: 'lookup-ready', vtUrl, otxUrl, mbUrl });
+      setResults([...checked]);
+    }
+    setLoading(false);
+  };
+
+  // Hash the current input text client-side
+  const [hashOutput, setHashOutput] = useState({});
+  const computeHashes = async () => {
+    const enc = new TextEncoder().encode(input);
+    const algs = [['SHA-1','sha1'],['SHA-256','sha256'],['SHA-512','sha512']];
+    const out = {};
+    for (const [alg, key] of algs) {
+      const buf = await crypto.subtle.digest(alg, enc);
+      out[key] = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    setHashOutput(out);
+    setResults([]);
+  };
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap'}}>
+        <Btn cls="btn-blue" onClick={checkHashes} disabled={loading}>
+          {loading ? '⏳ EXTRACTING...' : '▶ EXTRACT & CHECK HASHES'}
+        </Btn>
+        <Btn cls="btn-purple" onClick={computeHashes}>
+          ⚡ COMPUTE HASHES OF INPUT TEXT
+        </Btn>
+      </div>
+
+      <div className="grid-2" style={{gap:8,marginBottom:8}}>
+        <div>
+          <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase',display:'block',marginBottom:4}}>
+            INPUT (paste hashes or text to hash):
+          </label>
+          <textarea className="win-textarea" rows={8} value={input} onChange={e=>setInput(e.target.value)}
+            placeholder="Paste MD5/SHA1/SHA256/SHA512 hashes or any text to compute its hash..."
+          />
+        </div>
+        {Object.keys(hashOutput).length > 0 && (
+          <WinPanel title="COMPUTED HASHES (of input text)">
+            {[['SHA-1','sha1'],['SHA-256','sha256'],['SHA-512','sha512']].map(([label,key])=>(
+              <div key={key} style={{marginBottom:6}}>
+                <div style={{fontWeight:'bold',fontSize:11,color:'#000080',marginBottom:2}}>{label}</div>
+                <div style={{fontFamily:'Courier New',fontSize:11,wordBreak:'break-all',background:'#f0f0f0',padding:'3px 6px',border:'1px solid #C0C0C0'}}>
+                  {hashOutput[key]}
+                </div>
+                <CopyBtn text={hashOutput[key]} label={`COPY ${label}`}/>
+              </div>
+            ))}
+          </WinPanel>
+        )}
+      </div>
+
+      {results.length > 0 && (
+        <WinPanel title={`HASH LOOKUP — ${results.length} hash(es) found`}>
+          <div style={{marginBottom:6,fontFamily:'Courier New',fontSize:11,color:'#808080'}}>
+            ■ No API key required — links open directly in threat intel platforms
+          </div>
+          {results.map((r,i)=>(
+            <div key={i} className="result-row" style={{marginBottom:6}}>
+              <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:4,flexWrap:'wrap'}}>
+                <span className="badge badge-purple">{r.type}</span>
+                <span style={{fontFamily:'Courier New',fontSize:11,wordBreak:'break-all',color:'#000080'}}>{r.hash}</span>
+              </div>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                <a href={r.vtUrl} target="_blank" rel="noopener" style={{fontSize:11}}>🔍 VirusTotal</a>
+                <a href={r.otxUrl} target="_blank" rel="noopener" style={{fontSize:11}}>🔍 AlienVault OTX</a>
+                <a href={r.mbUrl} target="_blank" rel="noopener" style={{fontSize:11}}>🔍 MalwareBazaar</a>
+                <CopyBtn text={r.hash} label="COPY HASH"/>
+              </div>
+            </div>
+          ))}
+        </WinPanel>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: EMAIL HEADER PARSER (advanced)
+══════════════════════════════════════════════════ */
+const EmailHeaderParser = ({ addEntry, setReconIP }) => {
+  const [raw, setRaw] = useState('');
+  const [parsed, setParsed] = useState(null);
+
+  const parse = () => {
+    const h = raw;
+    const get = (re) => { const m = h.match(re); return m?m[1].trim():null; };
+    const getAll = (re) => { const m=[...h.matchAll(re)]; return m.map(x=>x[1].trim()); };
+
+    // Received chain
+    const receivedBlocks = [];
+    const rcvRe = /^(Received:[\s\S]*?)(?=^\S)/gim;
+    let m;
+    while((m=rcvRe.exec(h))!==null) {
+      const block = m[1];
+      const ips = [...new Set(block.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[])];
+      const byHost = block.match(/by\s+(\S+)/i)?.[1] || null;
+      const fromHost = block.match(/from\s+(\S+)/i)?.[1] || null;
+      const dateM = block.match(/;\s*(.+)$/m)?.[1]?.trim() || null;
+      receivedBlocks.push({ ips, byHost, fromHost, date: dateM, raw: block.trim() });
+    }
+
+    const spf    = get(/spf=(\S+)/i);
+    const dkim   = get(/dkim=(\S+)/i);
+    const dmarc  = get(/dmarc=(\S+)/i);
+    const from   = get(/^From:.*?<([^>]+)>/im) || get(/^From:\s*(\S+@\S+)/im);
+    const to     = get(/^To:.*?<([^>]+)>/im)   || get(/^To:\s*(\S+@\S+)/im);
+    const replyTo= get(/^Reply-To:.*?<([^>]+)>/im) || get(/^Reply-To:\s*(\S+@\S+)/im);
+    const subject= get(/^Subject:\s*(.*)/im);
+    const msgId  = get(/^Message-ID:\s*<?([^>\s]+)/im);
+    const xMailer= get(/^X-Mailer:\s*(.*)/im);
+    const xOrigIP= get(/^X-Originating-IP:\s*([\d.]+)/im);
+    const contentType = get(/^Content-Type:\s*(.*)/im);
+
+    const fromDomain    = from?.split('@')[1];
+    const replyToDomain = replyTo?.split('@')[1];
+    const spoofWarning  = fromDomain && replyToDomain && fromDomain.toLowerCase()!==replyToDomain.toLowerCase();
+
+    // Return-path mismatch
+    const returnPath = get(/^Return-Path:.*?<([^>]+)>/im) || get(/^Return-Path:\s*(\S+@\S+)/im);
+    const returnPathDomain = returnPath?.split('@')[1];
+    const returnMismatch = fromDomain && returnPathDomain && fromDomain.toLowerCase()!==returnPathDomain.toLowerCase();
+
+    const allIPs = [...new Set(receivedBlocks.flatMap(b=>b.ips))];
+    if (xOrigIP && !allIPs.includes(xOrigIP)) allIPs.unshift(xOrigIP);
+
+    setParsed({ receivedBlocks, spf, dkim, dmarc, from, to, replyTo, subject, msgId, xMailer, xOrigIP,
+                contentType, spoofWarning, returnMismatch, returnPath, fromDomain, replyToDomain, allIPs });
+  };
+
+  const authBadge = (label, val) => {
+    if (!val) return <span className="badge badge-gray">{label}: N/A</span>;
+    const pass = val.toLowerCase().startsWith('pass');
+    return <span className={`badge ${pass?'badge-green':'badge-red'}`}>{label}: {val.toUpperCase()}</span>;
+  };
+
+  const logEntry = () => {
+    if (!parsed) return;
+    const txt = [
+      `EMAIL HEADER ANALYSIS`,
+      `Subject: ${parsed.subject||'N/A'}`,
+      `From: ${parsed.from||'N/A'}`,
+      `To: ${parsed.to||'N/A'}`,
+      `Reply-To: ${parsed.replyTo||'N/A'}`,
+      `Return-Path: ${parsed.returnPath||'N/A'}`,
+      `SPF: ${parsed.spf||'N/A'} | DKIM: ${parsed.dkim||'N/A'} | DMARC: ${parsed.dmarc||'N/A'}`,
+      `Spoofing: ${parsed.spoofWarning?'YES - FROM/REPLY-TO MISMATCH':'NO'}`,
+      `Return-Path Mismatch: ${parsed.returnMismatch?'YES':'NO'}`,
+      `X-Originating-IP: ${parsed.xOrigIP||'N/A'}`,
+      `IPs in chain: ${parsed.allIPs.join(', ')||'none'}`,
+    ].join('\n');
+    addEntry(txt, 'HEADER');
+  };
+
+  return (
+    <div>
+      <label style={{fontWeight:'bold',fontSize:11,textTransform:'uppercase'}}>Raw Email Headers:</label>
+      <textarea className="win-textarea" rows={8} value={raw} onChange={e=>setRaw(e.target.value)}
+        placeholder="Paste full raw email headers here..."
+        style={{marginTop:4,marginBottom:8}}
+      />
+      <div style={{display:'flex',gap:6,marginBottom:8}}>
+        <Btn cls="btn-blue" onClick={parse}>▶ PARSE HEADERS</Btn>
+        {parsed && <Btn cls="btn-green" onClick={logEntry}>+ LOG TO EVIDENCE</Btn>}
+      </div>
+
+      {parsed && (
+        <div>
+          {(parsed.spoofWarning || parsed.returnMismatch) && (
+            <div style={{background:'#880000',color:'#ffff00',border:'2px solid #ff4444',padding:'6px 10px',marginBottom:8,fontWeight:'bold',fontFamily:'Courier New',fontSize:12}}>
+              {parsed.spoofWarning && <div>⚠ SPOOF: From [{parsed.fromDomain}] ≠ Reply-To [{parsed.replyToDomain}]</div>}
+              {parsed.returnMismatch && <div>⚠ RETURN-PATH MISMATCH: From [{parsed.fromDomain}] ≠ Return-Path [{parsed.returnPath?.split('@')[1]}]</div>}
+            </div>
+          )}
+
+          <div className="grid-2" style={{gap:8,marginBottom:8}}>
+            <WinPanel title="AUTH RESULTS">
+              <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                {authBadge('SPF',parsed.spf)}
+                {authBadge('DKIM',parsed.dkim)}
+                {authBadge('DMARC',parsed.dmarc)}
+              </div>
+            </WinPanel>
+            <WinPanel title="SENDER INFO">
+              <div style={{fontFamily:'Courier New',fontSize:11,display:'flex',flexDirection:'column',gap:3}}>
+                <div><span style={{color:'#808080'}}>Subject:     </span>{parsed.subject||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>From:        </span>{parsed.from||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>To:          </span>{parsed.to||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>Reply-To:    </span><span style={{color:parsed.spoofWarning?'#ff0000':'inherit'}}>{parsed.replyTo||'N/A'}</span></div>
+                <div><span style={{color:'#808080'}}>Return-Path: </span><span style={{color:parsed.returnMismatch?'#ff0000':'inherit'}}>{parsed.returnPath||'N/A'}</span></div>
+                <div><span style={{color:'#808080'}}>X-Orig-IP:   </span>{parsed.xOrigIP||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>X-Mailer:    </span>{parsed.xMailer||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>Message-ID:  </span><span style={{wordBreak:'break-all'}}>{parsed.msgId||'N/A'}</span></div>
+              </div>
+            </WinPanel>
+          </div>
+
+          <WinPanel title={`RECEIVED CHAIN — ${parsed.receivedBlocks.length} hop(s) | ${parsed.allIPs.length} unique IP(s)`}>
+            {parsed.allIPs.length > 0 && (
+              <div style={{marginBottom:8,display:'flex',flexWrap:'wrap',gap:4,alignItems:'center'}}>
+                <span style={{fontWeight:'bold',fontSize:11}}>IPs:</span>
+                {parsed.allIPs.map((ip,i)=>(
+                  <div key={i} style={{display:'flex',gap:3,alignItems:'center'}}>
+                    <span className="badge badge-blue">{ip}</span>
+                    <Btn style={{fontSize:10,padding:'1px 5px'}} onClick={()=>setReconIP(ip)}>→ RECON</Btn>
+                  </div>
+                ))}
+              </div>
+            )}
+            {parsed.receivedBlocks.map((b,i)=>(
+              <div key={i} style={{marginBottom:6,border:'1px solid #C0C0C0',padding:6,background:i%2?'#f8f8f8':'#fff',fontFamily:'Courier New',fontSize:11}}>
+                <div style={{fontWeight:'bold',color:'#000080',marginBottom:3}}>Hop {i+1}</div>
+                {b.fromHost && <div><span style={{color:'#808080'}}>From: </span>{b.fromHost}</div>}
+                {b.byHost   && <div><span style={{color:'#808080'}}>By:   </span>{b.byHost}</div>}
+                {b.date     && <div><span style={{color:'#808080'}}>Date: </span>{b.date}</div>}
+                {b.ips.length>0 && <div><span style={{color:'#808080'}}>IPs:  </span>{b.ips.join(', ')}</div>}
+              </div>
+            ))}
+          </WinPanel>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: ASN EXPLORER
+══════════════════════════════════════════════════ */
+const ASNExplorer = () => {
+  const [query, setQuery] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const lookup = async () => {
+    const q = query.trim().toUpperCase().replace(/^AS/i,'');
+    if (!q) return;
+    setLoading(true); setResult(null); setError('');
+    try {
+      const res = await fetch(`https://rdap.arin.net/registry/autnum/${q}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const org = data.entities?.find(e=>e.roles?.includes('registrant'));
+      const getVcard = (e, f) => e?.vcardArray?.[1]?.find(v=>v[0]===f)?.[3];
+      const abuseEnt = data.entities?.flatMap(e=>e.entities||[]).find(e=>e.roles?.includes('abuse'));
+
+      setResult({
+        asn: data.handle || `AS${q}`,
+        name: data.name || 'N/A',
+        org: getVcard(org,'fn') || org?.handle || 'N/A',
+        country: data.country || 'N/A',
+        abuseEmail: getVcard(abuseEnt,'email') || 'N/A',
+        startAutnum: data.startAutnum || 'N/A',
+        endAutnum: data.endAutnum || 'N/A',
+        status: (data.status||[]).join(', ') || 'N/A',
+        raw: data,
+      });
+    } catch(e) {
+      setError(`Lookup failed: ${e.message}. Try: https://bgpview.io/asn/${q.replace('AS','')}`);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:8,marginBottom:8}}>
+        <input className="win-input" style={{maxWidth:200}} value={query}
+          onChange={e=>setQuery(e.target.value)}
+          onKeyDown={e=>e.key==='Enter'&&lookup()}
+          placeholder="e.g. AS15169 or 15169"
+        />
+        <Btn cls="btn-blue" onClick={lookup} disabled={loading}>
+          {loading ? '⏳ LOOKING UP...' : '▶ ASN LOOKUP'}
+        </Btn>
+        {result && <CopyBtn text={Object.entries(result).filter(([k])=>k!=='raw').map(([k,v])=>`${k}: ${v}`).join('\n')}/>}
+      </div>
+
+      {error && <div style={{color:'#880000',fontWeight:'bold',fontFamily:'Courier New',fontSize:12,marginBottom:8}}>{error}</div>}
+
+      {result && (
+        <div className="grid-2" style={{gap:8}}>
+          <div style={{border:'2px solid #808080',background:'#fff'}}>
+            <div style={{background:'#000080',color:'#fff',padding:'3px 8px',fontWeight:'bold',fontSize:12,fontFamily:'Courier New'}}>
+              ASN DETAILS — {result.asn}
+            </div>
+            {[
+              ['ASN', result.asn],
+              ['Name', result.name],
+              ['Organization', result.org],
+              ['Country', result.country],
+              ['Status', result.status],
+              ['Autnum Range', `${result.startAutnum} – ${result.endAutnum}`],
+              ['Abuse Email', result.abuseEmail],
+            ].map(([label,val],i)=>(
+              <div key={i} style={{display:'grid',gridTemplateColumns:'160px 1fr',borderBottom:'1px solid #C0C0C0',background:i%2?'#f8f8f8':'#fff'}}>
+                <div style={{padding:'4px 8px',fontWeight:'bold',fontSize:11,borderRight:'1px solid #C0C0C0',color:'#000080',textTransform:'uppercase'}}>{label}</div>
+                <div style={{padding:'4px 8px',fontFamily:'Courier New',fontSize:11,wordBreak:'break-all'}}>{val}</div>
+              </div>
+            ))}
+          </div>
+          <WinPanel title="LINKS & CLI">
+            <Terminal lines={[
+              `# BGP / routing info:`,
+              `# https://bgpview.io/asn/${result.asn.replace('AS','')}`,
+              `# https://bgp.he.net/${result.asn}`,
+              `# https://stat.ripe.net/widget/asn-neighbours#w.resource=${result.asn}`,
+              ``,
+              `# Prefixes announced by this ASN:`,
+              `# https://bgpview.io/asn/${result.asn.replace('AS','')}/prefixes`,
+              ``,
+              `# WHOIS:`,
+              `whois -h whois.arin.net ${result.asn}`,
+            ]}/>
+          </WinPanel>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   TOOL: REPEAT OFFENDER TRACKER
+══════════════════════════════════════════════════ */
+const OffenderTracker = () => {
+  const [offenders, setOffenders] = useState(()=>{
+    try { return JSON.parse(localStorage.getItem('abuse_offenders')||'[]'); } catch { return []; }
+  });
+  const [query, setQuery] = useState('');
+  const [newIp, setNewIp] = useState('');
+  const [newNote, setNewNote] = useState('');
+  const [newType, setNewType] = useState('phishing');
+  const [checkResult, setCheckResult] = useState(null);
+
+  const save = (data) => {
+    setOffenders(data);
+    localStorage.setItem('abuse_offenders', JSON.stringify(data));
+  };
+
+  const addOffender = () => {
+    const ip = newIp.trim();
+    if (!ip) return;
+    const existing = offenders.find(o=>o.ip===ip);
+    const entry = {
+      ip,
+      type: newType,
+      note: newNote.trim(),
+      ts: ts(),
+    };
+    if (existing) {
+      const updated = offenders.map(o=>o.ip===ip
+        ? {...o, count:(o.count||1)+1, lastSeen:ts(), history:[...(o.history||[]),entry]}
+        : o
+      );
+      save(updated);
+    } else {
+      save([{ip, count:1, type:newType, note:newNote.trim(), firstSeen:ts(), lastSeen:ts(), history:[entry]}, ...offenders]);
+    }
+    setNewIp(''); setNewNote('');
+  };
+
+  const checkIP = () => {
+    const q = query.trim();
+    const found = offenders.find(o=>o.ip===q);
+    setCheckResult({ q, found });
+  };
+
+  const remove = (ip) => save(offenders.filter(o=>o.ip!==ip));
+
+  const TYPES = ['phishing','malware','spam','ddos','brute-force','other'];
+
+  return (
+    <div>
+      <div className="grid-2" style={{gap:8,marginBottom:8}}>
+        <WinPanel title="CHECK IP / DOMAIN">
+          <div style={{display:'flex',gap:6,marginBottom:8}}>
+            <input className="win-input" value={query} onChange={e=>setQuery(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&checkIP()}
+              placeholder="Enter IP or domain to check..."
+              style={{flex:1}}
+            />
+            <Btn cls="btn-blue" onClick={checkIP}>▶ CHECK</Btn>
+          </div>
+          {checkResult && (
+            <div style={{padding:'6px 8px',background:checkResult.found?'#880000':'#006600',color:'#fff',fontFamily:'Courier New',fontSize:12,fontWeight:'bold',border:'2px solid',borderColor:checkResult.found?'#ff4444':'#00ff00'}}>
+              {checkResult.found
+                ? `⚠ REPEAT OFFENDER — ${checkResult.q} — ${checkResult.found.count} offense(s) — Last: ${checkResult.found.lastSeen} — Type: ${checkResult.found.type}`
+                : `✓ CLEAN — ${checkResult.q} — No prior offenses on record`
+              }
+            </div>
+          )}
+        </WinPanel>
+
+        <WinPanel title="LOG NEW OFFENSE">
+          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+            <input className="win-input" value={newIp} onChange={e=>setNewIp(e.target.value)}
+              placeholder="IP or domain..." onKeyDown={e=>e.key==='Enter'&&addOffender()}
+            />
+            <select className="win-select" style={{width:'100%'}} value={newType} onChange={e=>setNewType(e.target.value)}>
+              {TYPES.map(t=><option key={t} value={t}>{t.toUpperCase()}</option>)}
+            </select>
+            <input className="win-input" value={newNote} onChange={e=>setNewNote(e.target.value)}
+              placeholder="Optional note / ticket ref..."
+            />
+            <Btn cls="btn-green" onClick={addOffender}>+ LOG OFFENSE</Btn>
+          </div>
+        </WinPanel>
+      </div>
+
+      <WinPanel title={`OFFENDER DATABASE — ${offenders.length} record(s)`}>
+        {offenders.length===0
+          ? <div style={{padding:16,textAlign:'center',color:'#808080',fontFamily:'Courier New',fontSize:12}}>[ NO RECORDS ]</div>
+          : (
+            <div style={{border:'2px solid #808080',background:'#fff',maxHeight:400,overflowY:'auto'}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 100px 80px 1fr auto',background:'#000080',color:'#fff',padding:'3px 8px',fontWeight:'bold',fontSize:11,fontFamily:'Courier New',gap:8}}>
+                <span>IP / DOMAIN</span><span>TYPE</span><span>COUNT</span><span>LAST SEEN</span><span>DEL</span>
+              </div>
+              {offenders.map((o,i)=>(
+                <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 100px 80px 1fr auto',padding:'4px 8px',borderBottom:'1px solid #C0C0C0',background:o.count>=3?'#fff0f0':i%2?'#f8f8f8':'#fff',gap:8,alignItems:'center'}}>
+                  <span style={{fontFamily:'Courier New',fontSize:11,wordBreak:'break-all',color:o.count>=3?'#880000':'#000080',fontWeight:o.count>=3?'bold':'normal'}}>
+                    {o.count>=3 && '⚠ '}{o.ip}
+                  </span>
+                  <span className={`badge ${o.type==='phishing'?'badge-red':o.type==='malware'?'badge-purple':o.type==='spam'?'badge-yellow':'badge-gray'}`} style={{fontSize:9}}>{o.type}</span>
+                  <span style={{fontFamily:'Courier New',fontSize:12,fontWeight:'bold',color:o.count>=3?'#880000':'#000'}}>{o.count}</span>
+                  <span style={{fontFamily:'Courier New',fontSize:11,color:'#808080'}}>{o.lastSeen}</span>
+                  <Btn cls="btn-red" style={{fontSize:10,padding:'1px 6px'}} onClick={()=>remove(o.ip)}>✕</Btn>
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </WinPanel>
+    </div>
+  );
+};
+
+
+
+/* ══════════════════════════════════════════════════
+   TOOL: EVIDENCE LOG
+══════════════════════════════════════════════════ */
+const EvidenceLog = ({ entries, removeEntry, exportAll, addEntry }) => {
+  const [note, setNote] = useState('');
+  const [filter, setFilter] = useState('ALL');
+  const cats = ['ALL','URL','HEADER','RESPONSE','NOTE','URL-CHECK'];
+  const visible = filter==='ALL' ? entries : entries.filter(e=>e.category===filter);
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+        <span style={{fontWeight:'bold',fontSize:11}}>FILTER:</span>
+        {cats.map(c=>(
+          <Btn key={c} cls={filter===c?'btn-blue':''} style={{fontSize:11,padding:'2px 8px'}}
+            onClick={()=>setFilter(c)}>{c}</Btn>
+        ))}
+        <Btn cls="btn-green" onClick={exportAll} style={{marginLeft:'auto'}}>📋 EXPORT ALL</Btn>
+      </div>
+
+      <div style={{display:'flex',gap:6,marginBottom:8}}>
+        <input className="win-input" value={note} onChange={e=>setNote(e.target.value)}
+          placeholder="Add a note to evidence log..."
+          onKeyDown={e=>{if(e.key==='Enter'&&note.trim()){addEntry(note.trim(),'NOTE');setNote('');}}}
+          style={{flex:1}}
+        />
+        <Btn cls="btn-green" onClick={()=>{if(note.trim()){addEntry(note.trim(),'NOTE');setNote('');}}}>+ ADD NOTE</Btn>
+      </div>
+
+      <div style={{border:'2px solid',borderColor:'#808080 #fff #fff #808080',boxShadow:'inset 1px 1px 0 #404040',background:'#fff',maxHeight:480,overflowY:'auto'}}>
+        {visible.length===0
+          ? <div style={{padding:16,textAlign:'center',color:'#808080',fontFamily:'Courier New',fontSize:12}}>
+              [ NO ENTRIES ]
+            </div>
+          : visible.map(e=>(
+            <div key={e.id} className="log-entry">
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
+                <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                  <span className={`badge ${
+                    e.category==='URL'||e.category==='URL-CHECK'?'badge-blue':
+                    e.category==='HEADER'?'badge-purple':
+                    e.category==='RESPONSE'?'badge-green':'badge-gray'
+                  }`} style={{fontSize:9}}>{e.category}</span>
+                  <span style={{color:'#808080',fontSize:10}}>{e.ts}</span>
+                </div>
+                <Btn cls="btn-red" style={{fontSize:10,padding:'1px 6px'}} onClick={()=>removeEntry(e.id)}>✕ DEL</Btn>
+              </div>
+              <div style={{whiteSpace:'pre-wrap',wordBreak:'break-all',color:'#000',fontSize:11}}>{e.content}</div>
+            </div>
+          ))
+        }
+      </div>
+      <div style={{marginTop:4,fontSize:11,color:'#808080'}}>
+        {visible.length} entr{visible.length===1?'y':'ies'} {filter!=='ALL'?`(filtered: ${filter})`:'total'}
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════════════════════════
+   MAIN APP
+══════════════════════════════════════════════════ */
+const TABS = [
+  { id:'url',        label:'URL CHECKER' },
+  { id:'emailparse', label:'EMAIL HEADERS' },
+  { id:'headers',    label:'HEADER ANALYZER' },
+  { id:'recon',      label:'IP RECON' },
+  { id:'whois',      label:'WHOIS' },
+  { id:'abusecon',   label:'ABUSE CONTACT' },
+  { id:'asn',        label:'ASN EXPLORER' },
+  { id:'ptr',        label:'PTR/RDNS' },
+  { id:'subnet',     label:'SUBNET CALC' },
+  { id:'netconfig',  label:'NET CONFIG GEN' },
+  { id:'portscan',   label:'PORT SCAN GEN' },
+  { id:'acl',        label:'ACL BUILDER' },
+  { id:'defang',     label:'DEFANG/REFANG' },
+  { id:'decode',     label:'DECODE/ENCODE' },
+  { id:'hash',       label:'HASH CHECKER' },
+  { id:'offender',   label:'OFFENDER TRACKER' },
+  { id:'response',   label:'RESPONSE GEN' },
+  { id:'evidence',   label:'EVIDENCE LOG' },
+];
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('url');
+  const [reconIP, setReconIPState] = useState('');
+  const { entries, addEntry, removeEntry, exportAll } = useEvidenceLog();
+
+  const setReconIP = ip => {
+    setReconIPState(ip);
+    setActiveTab('recon');
+  };
+
+  return (
+    <div className="app-container">
+      {/* ── HEADER ── */}
+      <div className="win-panel" style={{marginBottom:6}}>
+        <div style={{
+          background:'linear-gradient(to right,#000080,#1084d0)',
+          padding:'6px 10px',
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          gap:12
+        }}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <div style={{
+              width:32,height:32,
+              background:'#C0C0C0',
+              border:'2px solid',borderColor:'#fff #808080 #808080 #fff',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:18
+            }}>🛡</div>
+            <div>
+              <div style={{color:'#fff',fontWeight:'bold',fontSize:16,fontFamily:'"Arial Black",Impact,sans-serif',textTransform:'uppercase',letterSpacing:'.05em'}}>
+                ABUSE OPERATIONS CONSOLE
+              </div>
+              <div style={{color:'#aaccff',fontSize:10,fontFamily:'Courier New'}}>
+                v2.0 — INTERNAL USE ONLY — NOC / ABUSE / COMPLIANCE
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2}}>
+            <div style={{
+              background:'#000',color:'#00ff00',
+              fontFamily:'Courier New',fontSize:11,fontWeight:'bold',
+              padding:'2px 8px',
+              border:'2px solid',borderColor:'#808080 #fff #fff #808080',
+              boxShadow:'inset 1px 1px 0 #404040',
+            }}>
+              {ts()}
+            </div>
+            <span className="new-badge">LIVE</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MARQUEE ── */}
+      <div className="marquee-wrap" style={{marginBottom:6}}>
+        <div className="marquee-inner">
+          {[
+            ['#ff4444','■ ABUSE OPS CONSOLE v2.0 ■'],
+            ['#ffff00','  ◆  URL CHECKER  ◆  EMAIL HEADERS  ◆  WHOIS  ◆  ABUSE CONTACT  ◆  ASN EXPLORER  ◆  IP RECON  ◆  PTR/RDNS  ◆  SUBNET CALC  ◆  NET CONFIG  ◆  PORT SCAN  ◆  ACL BUILDER  ◆  DEFANG/REFANG  ◆  DECODE/ENCODE  ◆  HASH CHECKER  ◆  OFFENDER TRACKER  ◆  RESPONSE GEN  ◆  EVIDENCE LOG  ◆  '],
+            ['#00ff00','■ ALL TOOLS ACTIVE ■'],
+            ['#88aaff','  ◆  DO NOT DISTRIBUTE  ◆  INTERNAL USE ONLY  ◆  BOBER  ◆  '],
+          ].map(([c,t],i)=><span key={i} style={{color:c}}>{t}</span>)}
+        </div>
+      </div>
+
+      {/* ── STATS BAR ── */}
+      <div style={{
+        background:'#000',border:'2px solid',borderColor:'#808080 #fff #fff #808080',
+        boxShadow:'inset 1px 1px 0 #404040',
+        display:'flex',gap:0,marginBottom:6,
+        fontFamily:'Courier New',fontSize:11,
+        overflowX:'auto',
+      }}>
+        {[
+          ['TOOLS LOADED',TABS.length],
+          ['LOG ENTRIES',entries.length],
+          ['SESSION',ts().slice(0,10)],
+          ['STATUS','OPERATIONAL'],
+          ['OPERATOR','BOBER'],
+        ].map(([label,val],i)=>(
+          <div key={i} style={{
+            padding:'4px 12px',
+            borderRight:'1px solid #333',
+            display:'flex',flexDirection:'column',
+            alignItems:'center',minWidth:120,
+          }}>
+            <span style={{color:'#808080',fontSize:10}}>{label}</span>
+            <span style={{color:'#00ff00',fontWeight:'bold',fontSize:12}}>{val}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* ── TABS ── */}
+      <div className="tab-bar" style={{overflowX:'auto'}}>
+        {TABS.map(t=>(
+          <div key={t.id}
+            className={`tab ${activeTab===t.id?'active':''}`}
+            onClick={()=>setActiveTab(t.id)}
+            style={{fontSize:11}}
+          >
+            {t.id==='evidence' && entries.length>0
+              ? <>{t.label} <span className="new-badge" style={{fontSize:9,padding:'0 4px',animation:entries.length>0?undefined:'none'}}>{entries.length}</span></>
+              : t.label
+            }
+          </div>
+        ))}
+      </div>
+
+      <div className="tab-content-area">
+        {activeTab==='url'        && <URLChecker addEntry={addEntry} setReconIP={setReconIP}/>}
+        {activeTab==='emailparse' && <EmailHeaderParser addEntry={addEntry} setReconIP={setReconIP}/>}
+        {activeTab==='headers'   && <HeaderAnalyzer addEntry={addEntry} setReconIP={setReconIP}/>}
+        {activeTab==='recon'     && <IPRecon reconIP={reconIP} setReconIP={setReconIPState}/>}
+        {activeTab==='whois'     && <WhoisLookup/>}
+        {activeTab==='abusecon'  && <AbuseContactFinder/>}
+        {activeTab==='asn'       && <ASNExplorer/>}
+        {activeTab==='ptr'       && <PTRTool/>}
+        {activeTab==='subnet'    && <SubnetCalc/>}
+        {activeTab==='netconfig' && <NetConfigGen/>}
+        {activeTab==='portscan'  && <PortScanGen/>}
+        {activeTab==='acl'       && <ACLBuilder/>}
+        {activeTab==='defang'    && <DefangTool/>}
+        {activeTab==='decode'    && <DecodeTool/>}
+        {activeTab==='hash'      && <HashChecker/>}
+        {activeTab==='offender'  && <OffenderTracker/>}
+        {activeTab==='response'  && <ResponseGenerator addEntry={addEntry}/>}
+        {activeTab==='evidence'  && <EvidenceLog entries={entries} removeEntry={removeEntry} exportAll={exportAll} addEntry={addEntry}/>}
+      </div>
+
+      {/* ── FOOTER ── */}
+      <div style={{
+        marginTop:6,background:'#C0C0C0',
+        border:'2px solid',borderColor:'#fff #808080 #808080 #fff',
+        boxShadow:'inset -1px -1px 0 #404040,inset 1px 1px 0 #dfdfdf',
+        padding:'4px 10px',display:'flex',justifyContent:'space-between',
+        alignItems:'center',fontSize:11,
+      }}>
+        <span>■ ABUSE OPERATIONS CONSOLE — INTERNAL TOOL — NOT FOR EXTERNAL USE</span>
+        <span style={{fontFamily:'Courier New'}}>
+          Built by <span style={{color:'#0000aa',fontWeight:'bold'}}>BOBER</span> |
+          <span className="rainbow" style={{marginLeft:4}}>★ ONLINE ★</span>
+        </span>
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
