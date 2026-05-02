@@ -3,465 +3,372 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Abuse Operations Console v2.0 | NOC</title>
+  <title>Abuse Operations Console v2.0</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap');
-
-    :root {
-      --bg-base:      #080c10;
-      --bg-panel:     #0d1117;
-      --bg-surface:   #131920;
-      --bg-raised:    #1a2230;
-      --border:       #1e2d3d;
-      --border-bright:#2a4060;
-      --accent-cyan:  #00d4ff;
-      --accent-green: #00ff88;
-      --accent-amber: #ffb300;
-      --accent-red:   #ff3b4e;
-      --accent-purple:#a855f7;
-      --accent-blue:  #3b82f6;
-      --text-primary: #e2e8f0;
-      --text-secondary:#8899aa;
-      --text-dim:     #4a5568;
-      --glow-cyan:    0 0 12px rgba(0,212,255,.35);
-      --glow-green:   0 0 12px rgba(0,255,136,.35);
-      --glow-red:     0 0 12px rgba(255,59,78,.35);
-      --glow-amber:   0 0 12px rgba(255,179,0,.35);
-    }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    @keyframes rainbow {
+      0%   { color: #ff0000; }
+      17%  { color: #ff8000; }
+      33%  { color: #ffff00; }
+      50%  { color: #00cc00; }
+      67%  { color: #0088ff; }
+      83%  { color: #8800ff; }
+      100% { color: #ff0000; }
+    }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     @keyframes pulse-glow {
-      0%,100%{ opacity:1; box-shadow: 0 0 6px rgba(0,212,255,.6); }
-      50%{ opacity:.7; box-shadow: 0 0 14px rgba(0,212,255,1); }
+      0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(255,0,0,0.7); }
+      50%{ transform:scale(1.06); box-shadow:0 0 8px 3px rgba(255,0,0,0.4); }
     }
     @keyframes marquee { from{transform:translateX(100%)} to{transform:translateX(-100%)} }
-    @keyframes scanline-move {
-      0%   { transform: translateY(-100%); }
-      100% { transform: translateY(100vh); }
-    }
-    @keyframes fadeSlideIn {
-      from { opacity:0; transform:translateY(6px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-    @keyframes rainbow {
-      0%   { color: var(--accent-cyan); }
-      33%  { color: var(--accent-green); }
-      66%  { color: var(--accent-amber); }
-      100% { color: var(--accent-cyan); }
-    }
-    @keyframes border-pulse {
-      0%,100% { border-color: var(--border); }
-      50%     { border-color: var(--accent-cyan); }
-    }
-    @keyframes dot-blink {
-      0%,100% { opacity: 1; }
-      50%     { opacity: 0.2; }
+    @keyframes scanline {
+      0%{transform:translateY(-100%)}
+      100%{transform:translateY(100vh)}
     }
 
-    html, body { height: 100%; }
+    html, body { height:100%; }
 
     body {
-      font-family: 'JetBrains Mono', 'Courier New', monospace;
-      font-size: 12px;
-      background-color: var(--bg-base);
+      font-family: "MS Sans Serif", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      background-color: #008080;
       background-image:
-        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,212,255,.08) 0%, transparent 70%),
-        linear-gradient(180deg, var(--bg-base) 0%, #050810 100%);
-      color: var(--text-primary);
+        linear-gradient(45deg,#007070 25%,transparent 25%),
+        linear-gradient(-45deg,#007070 25%,transparent 25%),
+        linear-gradient(45deg,transparent 75%,#007070 75%),
+        linear-gradient(-45deg,transparent 75%,#007070 75%);
+      background-size: 4px 4px;
+      background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+      color: #000;
       min-height: 100vh;
     }
 
-    ::selection { background: rgba(0,212,255,.25); color: var(--accent-cyan); }
+    ::selection { background:#000080; color:#fff; }
 
-    /* ── BUTTONS ── */
+    /* ── Win95 primitives ── */
     .btn {
-      font-family: 'Rajdhani', 'JetBrains Mono', monospace;
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--bg-raised);
-      border: 1px solid var(--border-bright);
-      padding: 5px 14px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: bold;
+      background: #C0C0C0;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
+      padding: 4px 16px;
       cursor: pointer;
       user-select: none;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-primary);
+      letter-spacing: 0.05em;
+      color: #000;
       outline: none;
       white-space: nowrap;
-      transition: background .15s, border-color .15s, color .15s, box-shadow .15s;
-      border-radius: 3px;
-      position: relative;
-      overflow: hidden;
     }
-    .btn:hover {
-      background: var(--bg-surface);
-      border-color: var(--accent-cyan);
-      color: var(--accent-cyan);
-      box-shadow: var(--glow-cyan);
+    .btn:hover { background:#d0d0d0; }
+    .btn:active, .btn.pressed {
+      border-color: #808080 #ffffff #ffffff #808080;
+      box-shadow: inset 1px 1px 0 #404040, inset -1px -1px 0 #dfdfdf;
+      transform: translate(1px,1px);
     }
-    .btn:active {
-      transform: translateY(1px);
-      box-shadow: none;
-    }
-    .btn:focus-visible { outline: 1px solid var(--accent-cyan); outline-offset: 2px; }
-    .btn:disabled { opacity: .35; pointer-events: none; }
+    .btn:focus-visible { outline: 2px dotted #000; outline-offset: 2px; }
 
     .btn-blue {
-      background: rgba(59,130,246,.15);
-      border-color: rgba(59,130,246,.5);
-      color: var(--accent-blue);
+      background:#0000AA; color:#fff;
+      border-color:#5555ff #000055 #000055 #5555ff;
+      box-shadow: inset -1px -1px 0 #000033, inset 1px 1px 0 #8888ff;
     }
-    .btn-blue:hover {
-      background: rgba(59,130,246,.25);
-      border-color: var(--accent-blue);
-      color: #93c5fd;
-      box-shadow: 0 0 12px rgba(59,130,246,.4);
+    .btn-blue:hover { background:#0000cc; }
+    .btn-blue:active {
+      border-color:#000055 #5555ff #5555ff #000055;
+      box-shadow: inset 1px 1px 0 #000033, inset -1px -1px 0 #8888ff;
     }
 
     .btn-red {
-      background: rgba(255,59,78,.1);
-      border-color: rgba(255,59,78,.4);
-      color: var(--accent-red);
+      background:#AA0000; color:#fff;
+      border-color:#ff5555 #550000 #550000 #ff5555;
+      box-shadow: inset -1px -1px 0 #330000, inset 1px 1px 0 #ff8888;
     }
-    .btn-red:hover {
-      background: rgba(255,59,78,.2);
-      border-color: var(--accent-red);
-      color: #ff8090;
-      box-shadow: var(--glow-red);
+    .btn-red:hover{background:#cc0000;}
+    .btn-red:active{
+      border-color:#550000 #ff5555 #ff5555 #550000;
+      box-shadow:inset 1px 1px 0 #330000,inset -1px -1px 0 #ff8888;
     }
 
     .btn-green {
-      background: rgba(0,255,136,.1);
-      border-color: rgba(0,255,136,.35);
-      color: var(--accent-green);
+      background:#006600; color:#fff;
+      border-color:#00ff00 #003300 #003300 #00ff00;
+      box-shadow:inset -1px -1px 0 #002200, inset 1px 1px 0 #00cc00;
     }
-    .btn-green:hover {
-      background: rgba(0,255,136,.2);
-      border-color: var(--accent-green);
-      color: #6effb8;
-      box-shadow: var(--glow-green);
+    .btn-green:hover{background:#008800;}
+    .btn-green:active{
+      border-color:#003300 #00ff00 #00ff00 #003300;
+      box-shadow:inset 1px 1px 0 #002200,inset -1px -1px 0 #00cc00;
     }
 
     .btn-purple {
-      background: rgba(168,85,247,.12);
-      border-color: rgba(168,85,247,.4);
-      color: var(--accent-purple);
+      background:#660066; color:#fff;
+      border-color:#ff66ff #330033 #330033 #ff66ff;
+      box-shadow:inset -1px -1px 0 #220022, inset 1px 1px 0 #cc66cc;
     }
-    .btn-purple:hover {
-      background: rgba(168,85,247,.22);
-      border-color: var(--accent-purple);
-      color: #d8b4fe;
-      box-shadow: 0 0 12px rgba(168,85,247,.4);
+    .btn-purple:hover{background:#880088;}
+    .btn-purple:active{
+      border-color:#330033 #ff66ff #ff66ff #330033;
+      box-shadow:inset 1px 1px 0 #220022,inset -1px -1px 0 #cc66cc;
     }
 
-    /* ── INSET / OUTSET legacy aliases (no-op visually harmless) ── */
-    .inset, .outset {}
+    .inset {
+      border: 2px solid;
+      border-color: #808080 #ffffff #ffffff #808080;
+      box-shadow: inset 1px 1px 0 #404040, inset -1px -1px 0 #dfdfdf;
+    }
+    .outset {
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
+    }
 
-    /* ── PANELS ── */
+    /* ── Window / Panel ── */
     .win-panel {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      overflow: hidden;
+      background:#C0C0C0;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
     }
     .win-titlebar {
-      background: linear-gradient(90deg, rgba(0,212,255,.08) 0%, rgba(0,212,255,.02) 100%);
-      border-bottom: 1px solid var(--border);
-      color: var(--accent-cyan);
-      font-family: 'Rajdhani', monospace;
-      font-weight: 700;
-      font-size: 11px;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-      padding: 6px 10px;
+      background: linear-gradient(to right,#000080,#1084d0);
+      color: #fff;
+      font-weight: bold;
+      font-size: 13px;
+      padding: 3px 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       user-select: none;
     }
-    .win-titlebar::before {
-      content: '▸ ';
-      color: var(--accent-cyan);
-      opacity: .7;
-    }
-    .win-titlebar-btns { display: flex; gap: 5px; align-items: center; }
+    .win-titlebar-btns { display:flex; gap:2px; }
     .win-titlebar-btn {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: var(--border-bright);
-      border: none;
-      cursor: default;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0;
+      width:16px; height:14px;
+      background:#C0C0C0;
+      border:2px solid;
+      border-color:#ffffff #808080 #808080 #ffffff;
+      box-shadow:inset -1px -1px 0 #404040,inset 1px 1px 0 #dfdfdf;
+      display:flex; align-items:center; justify-content:center;
+      font-size:9px; font-weight:bold; cursor:pointer;
+      color:#000;
     }
-    .win-titlebar-btn:nth-child(1) { background: #ff5f56; }
-    .win-titlebar-btn:nth-child(2) { background: #ffbd2e; }
-    .win-titlebar-btn:nth-child(3) { background: #27c93f; }
-    .win-content { padding: 12px; }
+    .win-content {
+      padding: 8px;
+    }
 
-    /* ── TERMINAL ── */
+    /* ── Terminal ── */
     .terminal {
-      background: #020408;
-      color: var(--accent-green);
-      font-family: 'JetBrains Mono', 'Courier New', monospace;
-      font-size: 11.5px;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      overflow-x: auto;
-      white-space: pre;
-      line-height: 1.7;
-      box-shadow: inset 0 2px 8px rgba(0,0,0,.6);
+      background:#000;
+      color:#00ff00;
+      font-family:"Courier New",Courier,monospace;
+      font-size:12px;
+      padding:8px;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      overflow-x:auto;
+      white-space:pre;
+      line-height:1.5;
     }
 
-    /* ── INPUTS ── */
+    /* ── Inputs ── */
     .win-input {
-      font-family: 'JetBrains Mono', 'Courier New', monospace;
-      font-size: 12px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 6px 10px;
-      color: var(--text-primary);
-      outline: none;
-      width: 100%;
-      transition: border-color .15s, box-shadow .15s;
+      font-family:"Courier New",Courier,monospace;
+      font-size:12px;
+      background:#fff;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      padding:4px 6px;
+      color:#000;
+      outline:none;
+      width:100%;
     }
-    .win-input:focus {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 0 2px rgba(0,212,255,.12);
-    }
-    .win-input::placeholder { color: var(--text-dim); }
+    .win-input:focus { outline:2px dotted #000; outline-offset:1px; }
 
     .win-textarea {
-      font-family: 'JetBrains Mono', 'Courier New', monospace;
-      font-size: 12px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 8px 10px;
-      color: var(--text-primary);
-      outline: none;
-      resize: vertical;
-      width: 100%;
-      line-height: 1.6;
-      transition: border-color .15s, box-shadow .15s;
+      font-family:"Courier New",Courier,monospace;
+      font-size:12px;
+      background:#fff;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      padding:6px;
+      color:#000;
+      outline:none;
+      resize:vertical;
+      width:100%;
     }
-    .win-textarea:focus {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 0 2px rgba(0,212,255,.12);
-    }
-    .win-textarea::placeholder { color: var(--text-dim); }
+    .win-textarea:focus { outline:2px dotted #000; outline-offset:1px; }
 
     .win-select {
-      font-family: 'Rajdhani', monospace;
-      font-size: 12px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 5px 8px;
-      color: var(--text-primary);
-      outline: none;
-      cursor: pointer;
-      transition: border-color .15s;
+      font-family:inherit;
+      font-size:12px;
+      background:#fff;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      padding:3px 4px;
+      color:#000;
+      outline:none;
     }
-    .win-select:focus { border-color: var(--accent-cyan); }
+    .win-select:focus { outline:2px dotted #000; outline-offset:1px; }
 
-    /* ── TABS ── */
-    .tab-bar {
-      display: flex;
-      gap: 2px;
-      align-items: flex-end;
-      padding: 0 2px;
-      overflow-x: auto;
-      border-bottom: 1px solid var(--border);
-      scrollbar-width: none;
-    }
-    .tab-bar::-webkit-scrollbar { display: none; }
+    /* ── Tabs ── */
+    .tab-bar { display:flex; gap:0; align-items:flex-end; padding:0 4px; }
     .tab {
-      font-family: 'Rajdhani', monospace;
-      font-size: 11px;
-      font-weight: 600;
-      background: transparent;
-      border: 1px solid transparent;
-      border-bottom: none;
-      padding: 7px 13px 6px;
-      cursor: pointer;
-      white-space: nowrap;
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      color: var(--text-dim);
-      border-radius: 4px 4px 0 0;
-      transition: color .15s, background .15s;
-      position: relative;
-      top: 1px;
+      font-family:inherit; font-size:12px; font-weight:bold;
+      background:#C0C0C0;
+      border:2px solid;
+      border-color:#ffffff #808080 #000 #ffffff;
+      padding:4px 12px;
+      cursor:pointer;
+      margin-right:2px;
+      position:relative;
+      top:2px;
+      white-space:nowrap;
+      text-transform:uppercase;
+      letter-spacing:.03em;
     }
     .tab.active {
-      background: var(--bg-panel);
-      border-color: var(--border);
-      border-bottom-color: var(--bg-panel);
-      color: var(--accent-cyan);
-      z-index: 2;
+      background:#C0C0C0;
+      border-bottom-color:#C0C0C0;
+      z-index:2;
+      top:0;
+      padding-top:6px;
     }
-    .tab:not(.active):hover { color: var(--text-secondary); background: rgba(255,255,255,.03); }
+    .tab:not(.active):hover { background:#d0d0d0; }
     .tab-content-area {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-top: none;
-      padding: 14px;
-      border-radius: 0 0 6px 6px;
-      animation: fadeSlideIn .18s ease;
+      border:2px solid;
+      border-color:#ffffff #808080 #808080 #ffffff;
+      box-shadow:inset -1px -1px 0 #404040,inset 1px 1px 0 #dfdfdf;
+      background:#C0C0C0;
+      padding:12px;
+      position:relative;
+      z-index:1;
     }
 
-    /* ── BADGES ── */
+    /* ── Status badges ── */
     .badge {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 3px;
-      border: 1px solid;
-      display: inline-block;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      white-space: nowrap;
+      font-family:"Courier New",monospace;
+      font-size:11px;
+      font-weight:bold;
+      padding:2px 6px;
+      border:2px solid;
+      border-color:#ffffff #808080 #808080 #ffffff;
+      box-shadow:inset -1px -1px 0 #404040,inset 1px 1px 0 #dfdfdf;
+      display:inline-block;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      white-space:nowrap;
     }
-    .badge-green  { background: rgba(0,255,136,.1);  color: var(--accent-green);  border-color: rgba(0,255,136,.3);  }
-    .badge-red    { background: rgba(255,59,78,.1);  color: var(--accent-red);    border-color: rgba(255,59,78,.35); }
-    .badge-yellow { background: rgba(255,179,0,.1);  color: var(--accent-amber);  border-color: rgba(255,179,0,.3);  }
-    .badge-purple { background: rgba(168,85,247,.12);color: var(--accent-purple); border-color: rgba(168,85,247,.35);}
-    .badge-gray   { background: rgba(136,153,170,.1);color: var(--text-secondary);border-color: var(--border); }
-    .badge-blue   { background: rgba(59,130,246,.1); color: var(--accent-blue);   border-color: rgba(59,130,246,.3); }
+    .badge-green{ background:#006600; color:#00ff00; border-color:#00ff00 #003300 #003300 #00ff00; }
+    .badge-red  { background:#880000; color:#ff4444; border-color:#ff4444 #440000 #440000 #ff4444; }
+    .badge-yellow{background:#666600; color:#ffff00; border-color:#ffff00 #333300 #333300 #ffff00; }
+    .badge-purple{background:#440044; color:#ff88ff; border-color:#ff88ff #220022 #220022 #ff88ff; }
+    .badge-gray  { background:#808080; color:#ffffff; }
+    .badge-blue  { background:#000080; color:#88aaff; border-color:#88aaff #000044 #000044 #88aaff; }
 
     /* ── HR ── */
     .hr-groove {
-      border: none;
-      height: 1px;
-      background: var(--border);
-      margin: 10px 0;
+      border:none;
+      height:4px;
+      background:linear-gradient(to bottom,#808080 0%,#808080 50%,#ffffff 50%,#ffffff 100%);
+      margin:8px 0;
     }
 
-    /* ── MARQUEE ── */
+    /* ── Marquee ── */
     .marquee-wrap {
-      background: var(--bg-surface);
-      overflow: hidden;
-      padding: 5px 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
+      background:#000080;
+      overflow:hidden;
+      padding:4px 0;
+      border-top:2px solid #ffffff;
+      border-bottom:2px solid #404040;
     }
     .marquee-inner {
-      display: inline-block;
-      animation: marquee 40s linear infinite;
-      white-space: nowrap;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
+      display:inline-block;
+      animation: marquee 30s linear infinite;
+      white-space:nowrap;
+      font-family:"Courier New",monospace;
+      font-size:12px;
+      font-weight:bold;
     }
 
-    /* ── RESULT ROWS ── */
+    /* ── Result rows ── */
     .result-row {
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      background: var(--bg-surface);
-      margin-bottom: 4px;
-      padding: 8px 10px;
-      transition: border-color .15s;
+      border:2px solid;
+      border-color:#808080 #ffffff #ffffff #808080;
+      box-shadow:inset 1px 1px 0 #404040;
+      background:#fff;
+      margin-bottom:4px;
+      padding:6px 8px;
     }
-    .result-row:hover { border-color: var(--border-bright); }
-    .result-row:nth-child(even) { background: var(--bg-raised); }
+    .result-row:nth-child(even){ background:#f0f0f0; }
 
-    /* ── EVIDENCE LOG ── */
+    /* ── Evidence log ── */
     .log-entry {
-      border-bottom: 1px solid var(--border);
-      padding: 7px 10px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
+      border-bottom:1px solid #808080;
+      padding:4px 6px;
+      background:#fff;
+      font-family:"Courier New",monospace;
+      font-size:11px;
     }
-    .log-entry:nth-child(even) { background: rgba(255,255,255,.02); }
-    .log-entry:last-child { border-bottom: none; }
+    .log-entry:nth-child(even){ background:#fffff0; }
 
-    /* ── RAINBOW / BLINK ── */
-    .rainbow { animation: rainbow 3s linear infinite; font-weight: bold; }
-    .blink    { animation: blink 1s step-end infinite; }
+    /* ── Rainbow text ── */
+    .rainbow { animation:rainbow 3s linear infinite; font-weight:bold; }
+    .blink { animation:blink 1s step-end infinite; }
 
-    /* ── LIVE BADGE ── */
+    /* ── NEW badge ── */
     .new-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(0,212,255,.12);
-      color: var(--accent-cyan);
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border: 1px solid rgba(0,212,255,.35);
-      border-radius: 3px;
-      letter-spacing: .1em;
-      animation: pulse-glow 2s ease-in-out infinite;
-    }
-    .new-badge::before {
-      content: '';
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--accent-cyan);
-      animation: dot-blink 1.4s ease-in-out infinite;
+      display:inline-block;
+      background:#ff0000;
+      color:#ffff00;
+      font-size:10px;
+      font-weight:bold;
+      padding:1px 5px;
+      border:2px solid;
+      border-color:#ff8888 #880000 #880000 #ff8888;
+      animation:pulse-glow 1.5s ease-in-out infinite;
+      letter-spacing:.1em;
     }
 
-    /* ── LAYOUT ── */
-    .app-container { max-width: 1380px; margin: 0 auto; padding: 10px 12px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    /* ── Layout ── */
+    .app-container { max-width:1280px; margin:0 auto; padding:8px; }
 
-    /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg-base); }
-    ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
-    ::-webkit-scrollbar-corner { background: var(--bg-base); }
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
 
-    /* ── LINKS ── */
-    a { color: var(--accent-cyan); text-decoration: none; }
-    a:visited { color: var(--accent-purple); }
-    a:hover { color: #7eedff; text-decoration: underline; }
-
-    /* ── SPOOFING ALERT overrides ── */
-    [style*="background:#880000"] {
-      background: rgba(255,59,78,.12) !important;
-      color: var(--accent-red) !important;
-      border-color: rgba(255,59,78,.4) !important;
-      border-radius: 4px;
+    /* scrollbar */
+    ::-webkit-scrollbar{ width:16px; height:16px; }
+    ::-webkit-scrollbar-track{ background:#C0C0C0; border:2px inset #808080; }
+    ::-webkit-scrollbar-thumb{
+      background:#C0C0C0;
+      border:2px solid;
+      border-color:#ffffff #808080 #808080 #ffffff;
     }
-    [style*="color:#0000aa"] { color: var(--accent-blue) !important; }
-    [style*="color:#808080"]  { color: var(--text-secondary) !important; }
-    [style*="color:#000080"]  { color: var(--accent-blue) !important; }
-    [style*="color:#000"]     { color: var(--text-primary) !important; }
-    [style*="background:#000080"] { background: var(--bg-surface) !important; color: var(--accent-cyan) !important; }
+    ::-webkit-scrollbar-corner{ background:#C0C0C0; }
 
-    /* Label override */
-    label[style*="textTransform"], label { color: var(--text-secondary); }
-    [style*="fontWeight:'bold'"][style*="fontSize:11"] { color: var(--text-secondary) !important; }
-
-    /* log entry bg overrides */
-    [style*="background:'#fff'"], [style*='background:"#fff"'],
-    [style*="background:#fff"] { background: var(--bg-surface) !important; }
-    [style*="background:#fffff0"] { background: var(--bg-raised) !important; }
-
-    /* terminal white text fix */
-    .terminal [style*="color:#000"] { color: var(--accent-green) !important; }
+    a{ color:#0000ff; text-decoration:underline; }
+    a:visited{ color:#800080; }
+    a:hover{ color:#ff0000; }
 
     @media(prefers-reduced-motion:reduce){
-      .rainbow { animation:none; color:var(--accent-cyan); }
-      .blink    { animation:none; }
+      .rainbow{ animation:none; color:#ff0000; }
+      .blink{ animation:none; }
       .new-badge{ animation:none; }
-      .marquee-inner { animation:none; }
+      .marquee-inner{ animation:none; }
     }
     @media(max-width:700px){
-      .grid-2,.grid-3 { grid-template-columns:1fr; }
-      .tab { padding:5px 9px; font-size:10px; }
+      .grid-2,.grid-3{ grid-template-columns:1fr; }
+      .tab{ padding:3px 7px; font-size:11px; }
     }
   </style>
 </head>
@@ -734,18 +641,18 @@ const URLChecker = ({ addEntry, setReconIP }) => {
 
       {results.length > 0 && (
         <WinPanel title={`RESULTS — ${results.length} URLs`}>
-          <div style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'center',gap:'2px 8px',fontFamily:'"JetBrains Mono",monospace',fontSize:11,fontWeight:'bold',padding:'6px 10px',background:'var(--bg-raised)',color:'var(--accent-cyan)',marginBottom:4,borderRadius:4,letterSpacing:'.05em',borderBottom:'1px solid var(--border)'}}>
+          <div style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'center',gap:'2px 8px',fontFamily:'Courier New',fontSize:11,fontWeight:'bold',padding:'4px 6px',background:'#000080',color:'#fff',marginBottom:4}}>
             <span>STATUS</span><span>DEFANGED URL / NORMALIZED</span><span>HTTP</span><span>ACTIONS</span>
           </div>
           {results.map((r,i)=>(
             <div key={i} className="result-row" style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'start',gap:'4px 8px'}}>
               <div style={{paddingTop:2}}>{statusBadge(r.status)}</div>
               <div>
-                <div style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,wordBreak:'break-all',color:'var(--accent-blue)'}}>{r.defanged}</div>
-                <div style={{fontFamily:'"JetBrains Mono",monospace',fontSize:10,color:'var(--text-dim)',wordBreak:'break-all'}}>{r.url}</div>
-                <div style={{fontSize:10,color:'var(--text-secondary)',marginTop:2}}>{r.message}</div>
+                <div style={{fontFamily:'Courier New',fontSize:11,wordBreak:'break-all',color:'#000080'}}>{r.defanged}</div>
+                <div style={{fontFamily:'Courier New',fontSize:10,color:'#808080',wordBreak:'break-all'}}>{r.url}</div>
+                <div style={{fontSize:10,color:'#666',marginTop:2}}>{r.message}</div>
               </div>
-              <div style={{fontFamily:'"JetBrains Mono",monospace',fontWeight:700,fontSize:12,color: r.code==='ERR'?'var(--accent-red)':'var(--accent-amber)'}}>{r.code}</div>
+              <div style={{fontFamily:'Courier New',fontWeight:'bold',fontSize:12,color: r.code==='ERR'?'#880000':'#000080'}}>{r.code}</div>
               <div style={{display:'flex',flexDirection:'column',gap:2}}>
                 <CopyBtn text={r.defanged} label="CPY"/>
                 <Btn style={{fontSize:10,padding:'2px 6px'}} onClick={()=>addEntry(`URL-CHECK | ${r.status.toUpperCase()} | HTTP ${r.code}\nDefanged: ${r.defanged}\nNormalized: ${r.url}\nReason: ${r.message}`,'URL')}>LOG</Btn>
@@ -757,8 +664,8 @@ const URLChecker = ({ addEntry, setReconIP }) => {
 
       {isChecking && (
         <div style={{textAlign:'center',padding:16}}>
-          <span className="blink" style={{fontFamily:'"JetBrains Mono",monospace',fontSize:13,color:'var(--accent-cyan)',fontWeight:600,letterSpacing:'.08em'}}>
-            ◈ CHECKING URLS SEQUENTIALLY... ◈
+          <span className="blink" style={{fontFamily:'Courier New',fontSize:14,color:'#0000aa',fontWeight:'bold'}}>
+            ■ CHECKING URLS SEQUENTIALLY... ■
           </span>
         </div>
       )}
@@ -822,7 +729,7 @@ const HeaderAnalyzer = ({ addEntry, setReconIP }) => {
       {analysis && (
         <div>
           {analysis.spoofWarning && (
-            <div style={{background:'rgba(255,59,78,.12)',color:'var(--accent-red)',border:'1px solid rgba(255,59,78,.4)',padding:'8px 12px',marginBottom:8,fontWeight:700,fontFamily:'"JetBrains Mono",monospace',fontSize:12,borderRadius:4}}>
+            <div style={{background:'#880000',color:'#ffff00',border:'2px solid #ff4444',padding:'6px 10px',marginBottom:8,fontWeight:'bold',fontFamily:'Courier New',fontSize:12}}>
               ⚠ SPOOFING DETECTED: From domain [{analysis.from?.split('@')[1]}] ≠ Reply-To domain [{analysis.replyTo?.split('@')[1]}]
             </div>
           )}
@@ -835,10 +742,10 @@ const HeaderAnalyzer = ({ addEntry, setReconIP }) => {
               </div>
             </WinPanel>
             <WinPanel title="SENDER INFO">
-              <div className="win-content" style={{fontFamily:'"JetBrains Mono",monospace',fontSize:11,display:'flex',flexDirection:'column',gap:4}}>
-                <div><span style={{color:'var(--text-dim)'}}>Subject: </span>{analysis.subject||'N/A'}</div>
-                <div><span style={{color:'var(--text-dim)'}}>From:    </span>{analysis.from||'N/A'}</div>
-                <div><span style={{color:'var(--text-dim)'}}>Reply-To:</span><span style={{color:analysis.spoofWarning?'var(--accent-red)':'var(--text-primary)'}}> {analysis.replyTo||'N/A'}</span></div>
+              <div style={{fontFamily:'Courier New',fontSize:11,display:'flex',flexDirection:'column',gap:3}}>
+                <div><span style={{color:'#808080'}}>Subject: </span>{analysis.subject||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>From:    </span>{analysis.from||'N/A'}</div>
+                <div><span style={{color:'#808080'}}>Reply-To:</span><span style={{color:analysis.spoofWarning?'#ff0000':'inherit'}}> {analysis.replyTo||'N/A'}</span></div>
               </div>
             </WinPanel>
           </div>
@@ -2352,7 +2259,7 @@ const OffenderTracker = () => {
             <Btn cls="btn-blue" onClick={checkIP}>▶ CHECK</Btn>
           </div>
           {checkResult && (
-            <div style={{padding:'8px 12px',background:checkResult.found?'rgba(255,59,78,.12)':'rgba(0,255,136,.1)',color:checkResult.found?'var(--accent-red)':'var(--accent-green)',fontFamily:'"JetBrains Mono",monospace',fontSize:12,fontWeight:700,border:'1px solid',borderColor:checkResult.found?'rgba(255,59,78,.4)':'rgba(0,255,136,.3)',borderRadius:4}}>
+            <div style={{padding:'6px 8px',background:checkResult.found?'#880000':'#006600',color:'#fff',fontFamily:'Courier New',fontSize:12,fontWeight:'bold',border:'2px solid',borderColor:checkResult.found?'#ff4444':'#00ff00'}}>
               {checkResult.found
                 ? `⚠ REPEAT OFFENDER — ${checkResult.q} — ${checkResult.found.count} offense(s) — Last: ${checkResult.found.lastSeen} — Type: ${checkResult.found.type}`
                 : `✓ CLEAN — ${checkResult.q} — No prior offenses on record`
@@ -2435,9 +2342,9 @@ const EvidenceLog = ({ entries, removeEntry, exportAll, addEntry }) => {
         <Btn cls="btn-green" onClick={()=>{if(note.trim()){addEntry(note.trim(),'NOTE');setNote('');}}}>+ ADD NOTE</Btn>
       </div>
 
-      <div style={{border:'1px solid var(--border)',borderRadius:4,background:'var(--bg-surface)',maxHeight:480,overflowY:'auto'}}>
+      <div style={{border:'2px solid',borderColor:'#808080 #fff #fff #808080',boxShadow:'inset 1px 1px 0 #404040',background:'#fff',maxHeight:480,overflowY:'auto'}}>
         {visible.length===0
-          ? <div style={{padding:16,textAlign:'center',color:'var(--text-dim)',fontFamily:'"JetBrains Mono",monospace',fontSize:12}}>
+          ? <div style={{padding:16,textAlign:'center',color:'#808080',fontFamily:'Courier New',fontSize:12}}>
               [ NO ENTRIES ]
             </div>
           : visible.map(e=>(
@@ -2449,16 +2356,16 @@ const EvidenceLog = ({ entries, removeEntry, exportAll, addEntry }) => {
                     e.category==='HEADER'?'badge-purple':
                     e.category==='RESPONSE'?'badge-green':'badge-gray'
                   }`} style={{fontSize:9}}>{e.category}</span>
-                  <span style={{color:'var(--text-dim)',fontSize:10}}>{e.ts}</span>
+                  <span style={{color:'#808080',fontSize:10}}>{e.ts}</span>
                 </div>
                 <Btn cls="btn-red" style={{fontSize:10,padding:'1px 6px'}} onClick={()=>removeEntry(e.id)}>✕ DEL</Btn>
               </div>
-              <div style={{whiteSpace:'pre-wrap',wordBreak:'break-all',color:'var(--text-primary)',fontSize:11}}>{e.content}</div>
+              <div style={{whiteSpace:'pre-wrap',wordBreak:'break-all',color:'#000',fontSize:11}}>{e.content}</div>
             </div>
           ))
         }
       </div>
-      <div style={{marginTop:5,fontSize:10,color:'var(--text-dim)',letterSpacing:'.04em'}}>
+      <div style={{marginTop:4,fontSize:11,color:'#808080'}}>
         {visible.length} entr{visible.length===1?'y':'ies'} {filter!=='ALL'?`(filtered: ${filter})`:'total'}
       </div>
     </div>
@@ -2502,96 +2409,80 @@ const App = () => {
   return (
     <div className="app-container">
       {/* ── HEADER ── */}
-      <div style={{
-        background:'linear-gradient(90deg, rgba(0,212,255,.06) 0%, rgba(0,0,0,0) 60%)',
-        border:'1px solid var(--border)',
-        borderRadius:8,
-        padding:'12px 16px',
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        gap:12,
-        marginBottom:8,
-        position:'relative',
-        overflow:'hidden',
-      }}>
+      <div className="win-panel" style={{marginBottom:6}}>
         <div style={{
-          position:'absolute',top:0,left:0,right:0,bottom:0,
-          background:'linear-gradient(90deg, rgba(0,212,255,.04) 0%, transparent 50%)',
-          pointerEvents:'none',
-        }}/>
-        <div style={{display:'flex',alignItems:'center',gap:14}}>
-          <div style={{
-            width:42,height:42,
-            background:'rgba(0,212,255,.1)',
-            border:'1px solid rgba(0,212,255,.35)',
-            borderRadius:8,
-            display:'flex',alignItems:'center',justifyContent:'center',
-            fontSize:22,
-            boxShadow:'0 0 18px rgba(0,212,255,.25)',
-          }}>🛡</div>
-          <div>
+          background:'linear-gradient(to right,#000080,#1084d0)',
+          padding:'6px 10px',
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          gap:12
+        }}>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
             <div style={{
-              color:'var(--accent-cyan)',fontWeight:700,fontSize:18,
-              fontFamily:'"Rajdhani","JetBrains Mono",monospace',
-              textTransform:'uppercase',letterSpacing:'.1em',
-              textShadow:'0 0 20px rgba(0,212,255,.5)',
+              width:32,height:32,
+              background:'#C0C0C0',
+              border:'2px solid',borderColor:'#fff #808080 #808080 #fff',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:18
+            }}>🛡</div>
+            <div>
+              <div style={{color:'#fff',fontWeight:'bold',fontSize:16,fontFamily:'"Arial Black",Impact,sans-serif',textTransform:'uppercase',letterSpacing:'.05em'}}>
+                ABUSE OPERATIONS CONSOLE
+              </div>
+              <div style={{color:'#aaccff',fontSize:10,fontFamily:'Courier New'}}>
+                v2.0 — INTERNAL USE ONLY — NOC / ABUSE / COMPLIANCE
+              </div>
+            </div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2}}>
+            <div style={{
+              background:'#000',color:'#00ff00',
+              fontFamily:'Courier New',fontSize:11,fontWeight:'bold',
+              padding:'2px 8px',
+              border:'2px solid',borderColor:'#808080 #fff #fff #808080',
+              boxShadow:'inset 1px 1px 0 #404040',
             }}>
-              ABUSE OPERATIONS CONSOLE
+              {ts()}
             </div>
-            <div style={{color:'var(--text-dim)',fontSize:10,fontFamily:'"JetBrains Mono",monospace',letterSpacing:'.05em',marginTop:2}}>
-              v2.0 ·· INTERNAL USE ONLY ·· NOC / ABUSE / COMPLIANCE
-            </div>
+            <span className="new-badge">LIVE</span>
           </div>
-        </div>
-        <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:5}}>
-          <div style={{
-            background:'rgba(0,255,136,.08)',color:'var(--accent-green)',
-            fontFamily:'"JetBrains Mono",monospace',fontSize:11,fontWeight:600,
-            padding:'3px 10px',
-            border:'1px solid rgba(0,255,136,.25)',
-            borderRadius:4,
-            letterSpacing:'.04em',
-          }}>
-            {ts()}
-          </div>
-          <span className="new-badge">LIVE</span>
         </div>
       </div>
 
       {/* ── MARQUEE ── */}
-      <div className="marquee-wrap" style={{marginBottom:8}}>
+      <div className="marquee-wrap" style={{marginBottom:6}}>
         <div className="marquee-inner">
           {[
-            ['var(--accent-red)','■ ABUSE OPS CONSOLE v2.0 ■'],
-            ['var(--accent-cyan)','  ◆  URL CHECKER  ◆  EMAIL HEADERS  ◆  WHOIS  ◆  ABUSE CONTACT  ◆  ASN EXPLORER  ◆  IP RECON  ◆  PTR/RDNS  ◆  SUBNET CALC  ◆  NET CONFIG  ◆  PORT SCAN  ◆  ACL BUILDER  ◆  DEFANG/REFANG  ◆  DECODE/ENCODE  ◆  HASH CHECKER  ◆  OFFENDER TRACKER  ◆  RESPONSE GEN  ◆  EVIDENCE LOG  ◆  '],
-            ['var(--accent-green)','■ ALL TOOLS ACTIVE ■'],
-            ['var(--text-secondary)','  ◆  DO NOT DISTRIBUTE  ◆  INTERNAL USE ONLY  ◆  BOBER  ◆  '],
+            ['#ff4444','■ ABUSE OPS CONSOLE v2.0 ■'],
+            ['#ffff00','  ◆  URL CHECKER  ◆  EMAIL HEADERS  ◆  WHOIS  ◆  ABUSE CONTACT  ◆  ASN EXPLORER  ◆  IP RECON  ◆  PTR/RDNS  ◆  SUBNET CALC  ◆  NET CONFIG  ◆  PORT SCAN  ◆  ACL BUILDER  ◆  DEFANG/REFANG  ◆  DECODE/ENCODE  ◆  HASH CHECKER  ◆  OFFENDER TRACKER  ◆  RESPONSE GEN  ◆  EVIDENCE LOG  ◆  '],
+            ['#00ff00','■ ALL TOOLS ACTIVE ■'],
+            ['#88aaff','  ◆  DO NOT DISTRIBUTE  ◆  INTERNAL USE ONLY  ◆  BOBER  ◆  '],
           ].map(([c,t],i)=><span key={i} style={{color:c}}>{t}</span>)}
         </div>
       </div>
 
       {/* ── STATS BAR ── */}
       <div style={{
-        background:'var(--bg-surface)',border:'1px solid var(--border)',
-        borderRadius:6,
-        display:'flex',gap:0,marginBottom:8,
-        fontFamily:'"JetBrains Mono",monospace',fontSize:11,
+        background:'#000',border:'2px solid',borderColor:'#808080 #fff #fff #808080',
+        boxShadow:'inset 1px 1px 0 #404040',
+        display:'flex',gap:0,marginBottom:6,
+        fontFamily:'Courier New',fontSize:11,
         overflowX:'auto',
       }}>
         {[
-          ['TOOLS LOADED',TABS.length,'var(--accent-cyan)'],
-          ['LOG ENTRIES',entries.length,'var(--accent-amber)'],
-          ['SESSION',ts().slice(0,10),'var(--text-secondary)'],
-          ['STATUS','OPERATIONAL','var(--accent-green)'],
-          ['OPERATOR','BOBER','var(--accent-purple)'],
-        ].map(([label,val,color],i)=>(
+          ['TOOLS LOADED',TABS.length],
+          ['LOG ENTRIES',entries.length],
+          ['SESSION',ts().slice(0,10)],
+          ['STATUS','OPERATIONAL'],
+          ['OPERATOR','BOBER'],
+        ].map(([label,val],i)=>(
           <div key={i} style={{
-            padding:'7px 16px',
-            borderRight:'1px solid var(--border)',
+            padding:'4px 12px',
+            borderRight:'1px solid #333',
             display:'flex',flexDirection:'column',
-            alignItems:'center',minWidth:130,
+            alignItems:'center',minWidth:120,
           }}>
-            <span style={{color:'var(--text-dim)',fontSize:9,letterSpacing:'.08em',textTransform:'uppercase'}}>{label}</span>
-            <span style={{color,fontWeight:700,fontSize:12,marginTop:2}}>{val}</span>
+            <span style={{color:'#808080',fontSize:10}}>{label}</span>
+            <span style={{color:'#00ff00',fontWeight:'bold',fontSize:12}}>{val}</span>
           </div>
         ))}
       </div>
@@ -2635,17 +2526,16 @@ const App = () => {
 
       {/* ── FOOTER ── */}
       <div style={{
-        marginTop:8,background:'var(--bg-surface)',
-        border:'1px solid var(--border)',
-        borderRadius:6,
-        padding:'6px 14px',display:'flex',justifyContent:'space-between',
-        alignItems:'center',fontSize:10,
-        color:'var(--text-dim)',letterSpacing:'.04em',fontFamily:'"JetBrains Mono",monospace',
+        marginTop:6,background:'#C0C0C0',
+        border:'2px solid',borderColor:'#fff #808080 #808080 #fff',
+        boxShadow:'inset -1px -1px 0 #404040,inset 1px 1px 0 #dfdfdf',
+        padding:'4px 10px',display:'flex',justifyContent:'space-between',
+        alignItems:'center',fontSize:11,
       }}>
         <span>■ ABUSE OPERATIONS CONSOLE — INTERNAL TOOL — NOT FOR EXTERNAL USE</span>
-        <span>
-          Built by <span style={{color:'var(--accent-blue)',fontWeight:700}}>BOBER</span>
-          {' | '}<span className="rainbow">★ ONLINE ★</span>
+        <span style={{fontFamily:'Courier New'}}>
+          Built by <span style={{color:'#0000aa',fontWeight:'bold'}}>BOBER</span> |
+          <span className="rainbow" style={{marginLeft:4}}>★ ONLINE ★</span>
         </span>
       </div>
     </div>
