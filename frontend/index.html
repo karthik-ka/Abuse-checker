@@ -3,2507 +3,312 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Abuse Operations Console v2.0</title>
+  <title>Abuse Operations Console</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0e1a;--bg2:#111827;--bg3:#1a2235;--card:#151d2e;--hover:#1e293b;
+      --border:#1e293b;--border2:#334155;
+      --t1:#f1f5f9;--t2:#94a3b8;--t3:#64748b;
+      --accent:#6366f1;--accent2:#818cf8;--accent-bg:rgba(99,102,241,.08);--accent-glow:rgba(99,102,241,.15);
+      --green:#10b981;--green-bg:rgba(16,185,129,.1);
+      --red:#ef4444;--red-bg:rgba(239,68,68,.1);
+      --amber:#f59e0b;--amber-bg:rgba(245,158,11,.1);
+      --blue:#3b82f6;--blue-bg:rgba(59,130,246,.1);
+      --purple:#a855f7;--purple-bg:rgba(168,85,247,.1);
+      --cyan:#06b6d4;--cyan-bg:rgba(6,182,212,.1);
+      --sw:268px;--swc:64px;--hh:60px;
+      --r:12px;--rs:8px;--rx:6px;
+      --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+    }
+    html,body{height:100%}
+    body{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--t1);line-height:1.6;-webkit-font-smoothing:antialiased}
+    ::selection{background:var(--accent);color:#fff}
+    ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
 
-    :root {
-      --bg: #f1f5f9;
-      --surface: #ffffff;
-      --surface-hover: #f8fafc;
-      --border: #e2e8f0;
-      --border-strong: #cbd5e1;
-      --text: #0f172a;
-      --text-secondary: #64748b;
-      --text-muted: #94a3b8;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --primary-light: #dbeafe;
-      --success: #16a34a;
-      --success-light: #dcfce7;
-      --danger: #dc2626;
-      --danger-light: #fee2e2;
-      --warning: #d97706;
-      --warning-light: #fef3c7;
-      --purple: #9333ea;
-      --purple-light: #f3e8ff;
-      --sidebar-width: 260px;
-      --header-height: 56px;
-      --radius: 8px;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
-      --code-bg: #0f172a;
-      --code-text: #22d3ee;
-    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes toastIn{from{opacity:0;transform:translateX(80px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(80px)}}
+    .au{animation:fadeUp .3s ease-out}
 
-    html, body { height: 100%; }
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 14px;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-    }
+    .layout{display:flex;height:100vh;overflow:hidden}
 
-    ::selection { background: var(--primary-light); color: var(--primary); }
+    /* Sidebar */
+    .sb{width:var(--sw);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s;z-index:100;position:relative}
+    .sb.collapsed{width:var(--swc)}
+    .sb.collapsed .sl,.sb.collapsed .sst,.sb.collapsed .ss input,.sb.collapsed .nit,.sb.collapsed .nbg,.sb.collapsed .sft,.sb.collapsed .ngl{display:none}
+    .sb.collapsed .sh{justify-content:center;padding:14px 0}
+    .sb.collapsed .ni{justify-content:center;padding:10px}
+    .sh{padding:18px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .shc{display:flex;align-items:center;gap:12px}
+    .logo{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#8b5cf6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;box-shadow:0 2px 8px rgba(99,102,241,.3)}
+    .sl{font-size:14px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
+    .sst{font-size:10px;color:var(--t3);margin-top:1px}
+    .ss{padding:10px 16px;border-bottom:1px solid var(--border)}
+    .ss input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px 7px 32px;color:var(--t1);font-size:12px;font-family:var(--font);outline:none;transition:all .15s}
+    .ss input::placeholder{color:var(--t3)}.ss input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+    .sn{flex:1;overflow-y:auto;padding:6px}
+    .ngl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);padding:14px 10px 4px}
+    .ni{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500;color:var(--t2);transition:all .15s;user-select:none;margin-bottom:1px;position:relative}
+    .ni:hover{background:var(--hover);color:var(--t1)}
+    .ni.act{background:var(--accent-bg);color:var(--accent2);font-weight:600}
+    .ni.act::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--accent);border-radius:0 3px 3px 0}
+    .nic{width:18px;text-align:center;font-size:13px;flex-shrink:0;opacity:.6}.ni.act .nic{opacity:1}
+    .nit{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .nbg{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center}
+    .sf{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;font-size:11px;color:var(--t3)}
+    .sd{width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px rgba(16,185,129,.5);display:inline-block;margin-right:5px}
 
-    /* ── Layout ── */
-    .app-layout {
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+    /* Main */
+    .ma{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+    .tb{height:var(--hh);background:rgba(17,24,39,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0}
+    .cb{background:none;border:1px solid var(--border);border-radius:var(--rx);color:var(--t2);cursor:pointer;padding:5px 8px;font-size:15px;transition:all .15s;display:flex;align-items:center}.cb:hover{background:var(--hover);color:var(--t1)}
+    .tt{font-size:18px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
+    .tm{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--t3)}
+    .mi{display:flex;align-items:center;gap:5px;padding:3px 8px;background:var(--bg3);border-radius:var(--rx);border:1px solid var(--border)}
+    .md{width:5px;height:5px;border-radius:50%}.md-g{background:var(--green);box-shadow:0 0 4px rgba(16,185,129,.4)}.md-b{background:var(--blue)}
+    .ca{flex:1;overflow-y:auto;padding:22px}.ca::-webkit-scrollbar{width:5px}.ca::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
 
-    /* ── Sidebar ── */
-    .sidebar {
-      width: var(--sidebar-width);
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-    .sidebar-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .sidebar-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .sidebar-title-icon {
-      width: 28px; height: 28px;
-      background: var(--primary);
-      color: #fff;
-      border-radius: 6px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px;
-    }
-    .sidebar-subtitle {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
-      margin-left: 36px;
-    }
-    .sidebar-nav {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-    }
-    .sidebar-nav::-webkit-scrollbar { width: 4px; }
-    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
-    .sidebar-nav::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+    /* Cards */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 1px 3px rgba(0,0,0,.3);transition:all .15s}
+    .card:hover{border-color:var(--border2)}
+    .ch{padding:12px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--t1);display:flex;align-items:center;gap:8px}
+    .cb2{padding:16px}.cf{padding:10px 16px;border-top:1px solid var(--border)}
 
-    .nav-group-label {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      padding: 12px 12px 4px;
-    }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      transition: all 0.15s ease;
-      user-select: none;
-      position: relative;
-    }
-    .nav-item:hover { background: var(--surface-hover); color: var(--text); }
-    .nav-item.active {
-      background: var(--primary-light);
-      color: var(--primary);
-      font-weight: 600;
-    }
-    .nav-item-badge {
-      margin-left: auto;
-      background: var(--danger);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 10px;
-      min-width: 18px;
-      text-align: center;
-    }
-    .sidebar-footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      font-size: 11px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-    }
-    .status-dot {
-      width: 8px; height: 8px;
-      background: var(--success);
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 6px;
-    }
+    /* Stats */
+    .sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;transition:all .15s;position:relative;overflow:hidden}
+    .sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+    .sc.sa::before{background:linear-gradient(90deg,var(--accent),#8b5cf6)}
+    .sc.sg::before{background:linear-gradient(90deg,var(--green),#34d399)}
+    .sc.sr::before{background:linear-gradient(90deg,var(--red),#f87171)}
+    .sc.sy::before{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+    .sc.sb2::before{background:linear-gradient(90deg,var(--blue),#60a5fa)}
+    .sc.sp::before{background:linear-gradient(90deg,var(--purple),#c084fc)}
+    .sc:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+    .sv2{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+    .sv{font-size:26px;font-weight:800;color:var(--t1);letter-spacing:-.03em}
+    .ss2{font-size:11px;color:var(--t3);margin-top:3px}
 
-    /* ── Main area ── */
-    .main-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      min-width: 0;
-    }
-    .top-bar {
-      height: var(--header-height);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      gap: 16px;
-      flex-shrink: 0;
-    }
-    .top-bar-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .top-bar-meta {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .content-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 24px;
-    }
-    .content-area::-webkit-scrollbar { width: 6px; }
-    .content-area::-webkit-scrollbar-track { background: transparent; }
-    .content-area::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+    /* Buttons */
+    .btn{font-family:var(--font);font-size:12px;font-weight:600;border:none;border-radius:var(--rs);padding:7px 14px;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--accent),#7c3aed);transition:all .15s;outline:none;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}.btn:hover{transform:translateY(-1px);box-shadow:0 0 16px var(--accent-glow)}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .bs{background:var(--bg3);color:var(--t1);border:1px solid var(--border)}.bs:hover{background:var(--hover);border-color:var(--border2);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+    .bg2{background:linear-gradient(135deg,var(--green),#059669)}.bg2:hover{box-shadow:0 0 16px rgba(16,185,129,.3)}
+    .bd{background:linear-gradient(135deg,var(--red),#dc2626)}.bd:hover{box-shadow:0 0 16px rgba(239,68,68,.3)}
+    .bgh{background:transparent;color:var(--t2)}.bgh:hover{background:var(--hover);color:var(--t1)}
+    .bx{font-size:10px;padding:3px 7px;border-radius:var(--rx)}.bsm{font-size:11px;padding:4px 10px}
 
-    /* ── Cards ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-sm);
-    }
-    .card-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card-body { padding: 16px; }
-    .card-footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
-    }
+    /* Inputs */
+    .inp,.ta,.sel{font-family:var(--font);font-size:13px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:8px 12px;color:var(--t1);outline:none;width:100%;transition:all .15s}
+    .inp::placeholder,.ta::placeholder{color:var(--t3)}.inp:focus,.ta:focus,.sel:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg);background:var(--bg2)}
+    .ta{font-family:var(--mono);font-size:12px;resize:vertical;line-height:1.7}
+    .sel{padding:7px 30px 7px 12px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer}
+    .sel option{background:var(--bg2);color:var(--t1)}
 
-    /* ── Buttons ── */
-    .btn {
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      border: none;
-      border-radius: 6px;
-      padding: 7px 16px;
-      cursor: pointer;
-      user-select: none;
-      color: #fff;
-      background: var(--primary);
-      transition: all 0.15s ease;
-      outline: none;
-      white-space: nowrap;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn:hover { background: var(--primary-hover); }
-    .btn:active { transform: scale(0.98); }
-    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    /* Code */
+    .code{background:#0d1117;color:#7dd3fc;font-family:var(--mono);font-size:12px;padding:16px;border-radius:var(--r);overflow-x:auto;white-space:pre;line-height:1.7;border:1px solid var(--border)}
 
-    .btn-secondary {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+    /* Badges */
+    .badge{font-family:var(--font);font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:3px;text-transform:uppercase;letter-spacing:.03em}
+    .b-g{background:var(--green-bg);color:var(--green)}.b-r{background:var(--red-bg);color:var(--red)}.b-y{background:var(--amber-bg);color:var(--amber)}.b-p{background:var(--purple-bg);color:var(--purple)}.b-gr{background:var(--bg3);color:var(--t3)}.b-bl{background:var(--blue-bg);color:var(--blue)}.b-c{background:var(--cyan-bg);color:var(--cyan)}.b-a{background:var(--accent-bg);color:var(--accent2)}
 
-    .btn-success { background: var(--success); }
-    .btn-success:hover { background: #15803d; }
+    /* Data field */
+    .df{padding:7px 0;border-bottom:1px solid var(--border)}.df:last-child{border-bottom:none}
+    .dl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:2px}
+    .dv{font-size:12px;color:var(--t1);word-break:break-all}.dv.m{font-family:var(--mono);font-size:11px}
 
-    .btn-danger { background: var(--danger); }
-    .btn-danger:hover { background: #b91c1c; }
+    /* Alerts */
+    .alert{padding:10px 14px;border-radius:var(--rs);font-weight:500;font-size:12px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .ad{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.2)}.as{background:var(--green-bg);color:var(--green);border:1px solid rgba(16,185,129,.2)}.aw{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(245,158,11,.2)}.ai{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
 
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-secondary);
-    }
-    .btn-ghost:hover { background: var(--surface-hover); color: var(--text); }
+    /* Result row */
+    .rr{border:1px solid var(--border);border-radius:var(--rs);background:var(--card);margin-bottom:8px;padding:12px 14px;transition:all .15s}.rr:hover{border-color:var(--border2);box-shadow:0 2px 8px rgba(0,0,0,.3)}
 
-    .btn-sm { font-size: 12px; padding: 4px 10px; }
-    .btn-xs { font-size: 11px; padding: 3px 8px; }
+    /* Log */
+    .le{border-bottom:1px solid var(--border);padding:10px 14px;background:var(--card);transition:background .15s}.le:last-child{border-bottom:none}.le:nth-child(even){background:rgba(26,34,53,.5)}.le:hover{background:var(--hover)}
 
-    /* ── Inputs ── */
-    .input, .textarea, .select {
-      font-family: inherit;
-      font-size: 13px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 12px;
-      color: var(--text);
-      outline: none;
-      width: 100%;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-    .input:focus, .textarea:focus, .select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px var(--primary-light);
-    }
-    .textarea {
-      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
-      font-size: 12px;
-      resize: vertical;
-      line-height: 1.6;
-    }
-    .select { padding: 7px 32px 7px 12px; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+    /* Grid */
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 
-    /* ── Code / Terminal ── */
-    .code-block {
-      background: var(--code-bg);
-      color: var(--code-text);
-      font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
-      font-size: 12px;
-      padding: 16px;
-      border-radius: var(--radius);
-      overflow-x: auto;
-      white-space: pre;
-      line-height: 1.6;
-    }
+    /* Label */
+    .lb{display:block;font-size:11px;font-weight:600;color:var(--t2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
 
-    /* ── Badges ── */
-    .badge {
-      font-family: inherit;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 12px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .badge-green { background: var(--success-light); color: var(--success); }
-    .badge-red { background: var(--danger-light); color: var(--danger); }
-    .badge-yellow { background: var(--warning-light); color: var(--warning); }
-    .badge-purple { background: var(--purple-light); color: var(--purple); }
-    .badge-gray { background: #f1f5f9; color: var(--text-secondary); }
-    .badge-blue { background: var(--primary-light); color: var(--primary); }
+    /* Toast */
+    .tc{position:fixed;top:16px;right:16px;z-index:10000;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+    .toast{pointer-events:all;background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;display:flex;align-items:center;gap:8px;min-width:260px;max-width:380px;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:toastIn .3s ease-out;font-size:12px}
+    .toast.te{animation:toastOut .2s ease-in forwards}
+    .ts2{border-left:3px solid var(--green)}.te2{border-left:3px solid var(--red)}.ti2{border-left:3px solid var(--blue)}
 
-    /* ── Data table ── */
-    .data-table {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .data-table-header {
-      display: grid;
-      background: var(--bg);
-      padding: 8px 12px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-    }
-    .data-table-row {
-      display: grid;
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      align-items: center;
-      transition: background 0.1s;
-    }
-    .data-table-row:last-child { border-bottom: none; }
-    .data-table-row:hover { background: var(--surface-hover); }
-    .data-table-row:nth-child(even) { background: #fafbfc; }
-    .data-table-row:nth-child(even):hover { background: var(--surface-hover); }
+    /* Cmd palette */
+    .co{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding-top:18vh;animation:fadeUp .15s ease-out}
+    .cp{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);width:520px;max-height:380px;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:fadeUp .2s ease-out;overflow:hidden}
+    .ci2{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);padding:14px 18px;font-size:15px;font-family:var(--font);color:var(--t1);outline:none}.ci2::placeholder{color:var(--t3)}
+    .cr{max-height:300px;overflow-y:auto;padding:6px}
+    .cm{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--t2);transition:all .15s}.cm:hover,.cm.sel{background:var(--hover);color:var(--t1)}
+    .cic{width:18px;text-align:center;font-size:13px}
 
-    /* ── Result rows ── */
-    .result-row {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      margin-bottom: 8px;
-      padding: 12px 16px;
-      transition: box-shadow 0.15s;
-    }
-    .result-row:hover { box-shadow: var(--shadow); }
+    /* Quick action */
+    .qa{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;cursor:pointer;transition:all .15s;text-align:center}.qa:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+    .qi{font-size:22px;margin-bottom:6px}.ql{font-size:12px;font-weight:600;color:var(--t1)}.qd{font-size:10px;color:var(--t3);margin-top:3px}
 
-    /* ── Log entries ── */
-    .log-entry {
-      border-bottom: 1px solid var(--border);
-      padding: 10px 14px;
-      background: var(--surface);
-    }
-    .log-entry:last-child { border-bottom: none; }
-    .log-entry:nth-child(even) { background: #fafbfc; }
+    /* Timeline */
+    .tl{position:relative;padding-left:22px}.tl::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--border)}
+    .ti3{position:relative;padding-bottom:14px}.ti3:last-child{padding-bottom:0}
+    .td{position:absolute;left:-18px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+    .tt2{font-size:10px;color:var(--t3);margin-bottom:2px}.tc2{font-size:12px;color:var(--t2)}
 
-    /* ── Grid helpers ── */
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    /* Tabs */
+    .tabs{display:flex;gap:2px;background:var(--bg3);border-radius:var(--rs);padding:3px;margin-bottom:14px;width:fit-content}
+    .tab{padding:5px 12px;border-radius:var(--rx);font-size:11px;font-weight:600;color:var(--t3);cursor:pointer;transition:all .15s;user-select:none}.tab:hover{color:var(--t2)}.tab.act{background:var(--card);color:var(--t1);box-shadow:0 1px 3px rgba(0,0,0,.3)}
 
-    /* ── Labels ── */
-    .label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
+    a{color:var(--accent2);text-decoration:none;font-weight:500}a:hover{text-decoration:underline}
 
-    /* ── Alert ── */
-    .alert {
-      padding: 12px 16px;
-      border-radius: var(--radius);
-      font-weight: 600;
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-    .alert-danger { background: var(--danger-light); color: var(--danger); border: 1px solid #fca5a5; }
-    .alert-success { background: var(--success-light); color: var(--success); border: 1px solid #86efac; }
-    .alert-warning { background: var(--warning-light); color: var(--warning); border: 1px solid #fcd34d; }
-
-    /* ── Links ── */
-    a { color: var(--primary); text-decoration: none; font-weight: 500; }
-    a:hover { text-decoration: underline; }
-    a:visited { color: var(--purple); }
-
-    /* ── Responsive ── */
-    @media (max-width: 900px) {
-      .sidebar { width: 220px; }
-      .grid-2, .grid-3 { grid-template-columns: 1fr; }
-      .content-area { padding: 16px; }
-    }
-    @media (max-width: 640px) {
-      .app-layout { flex-direction: column; }
-      .sidebar {
-        width: 100%;
-        max-height: 200px;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-      }
-      .sidebar-nav { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px; }
-      .nav-group-label { display: none; }
-      .nav-item { font-size: 12px; padding: 6px 10px; }
-      .sidebar-header { padding: 12px 16px; }
-      .sidebar-footer { display: none; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
-    }
+    @media(max-width:1024px){.g4{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:768px){.sb{position:fixed;left:0;top:0;bottom:0;z-index:200}.sb.collapsed{width:0;border:none}.g2,.g3,.g4{grid-template-columns:1fr}.ca{padding:14px}.tb{padding:0 14px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback, useRef } = React;
+const {useState,useEffect,useCallback,useRef,useMemo}=React;
 
-/* ══════════════════════════════════════════════════
-   UTILITIES
-══════════════════════════════════════════════════ */
-const ts = () => new Date().toISOString().replace('T',' ').slice(0,19);
-
-const normalizeDefanged = t =>
-  t.replace(/hxxps:\/\//gi,'https://')
-   .replace(/hxxp:\/\//gi,'http://')
-   .replace(/\[\.\]|\(\.\)/g,'.')
-   .replace(/\[:\]/g,':');
-
-const defang = url =>
-  url.replace(/https:\/\//gi,'hxxps://')
-     .replace(/http:\/\//gi,'hxxp://')
-     .replace(/\./g,'[.]');
-
-const extractUrls = t => {
-  const n = normalizeDefanged(t);
-  return [...new Set(n.match(/https?:\/\/[^\s"'<>]+/gi)||[])];
-};
-
-const extractIPs = t =>
-  [...new Set((t.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[]))];
-
-const copyToClipboard = async text => {
-  try { await navigator.clipboard.writeText(text); return true; }
-  catch { return false; }
-};
-
-const calcSubnet = cidr => {
-  const [ipStr, bits] = cidr.split('/');
-  const prefix = parseInt(bits);
-  if (isNaN(prefix)||prefix<0||prefix>32) return null;
-  const ipParts = ipStr.split('.').map(Number);
-  if (ipParts.length!==4||ipParts.some(x=>isNaN(x)||x<0||x>255)) return null;
-  const ipNum = ipParts.reduce((a,b)=>(a<<8)|b,0)>>>0;
-  const mask = prefix===0 ? 0 : (0xFFFFFFFF<<(32-prefix))>>>0;
-  const netw = (ipNum&mask)>>>0;
-  const bcast= (netw|(~mask>>>0))>>>0;
-  const n2ip = n=>[24,16,8,0].map(s=>(n>>s)&0xff).join('.');
-  return {
-    network: n2ip(netw),
-    netmask: n2ip(mask),
-    broadcast: n2ip(bcast),
-    firstHost: prefix>=31 ? n2ip(netw) : n2ip(netw+1),
-    lastHost:  prefix>=31 ? n2ip(bcast) : n2ip(bcast-1),
-    usable: prefix>=31 ? (prefix===31?2:1) : Math.pow(2,32-prefix)-2,
-    prefix
-  };
-};
-
-/* ══════════════════════════════════════════════════
-   UI PRIMITIVES
-══════════════════════════════════════════════════ */
-const Card = ({title,children,footer,className,style,bodyStyle}) => (
-  <div className={`card ${className||''}`} style={style}>
-    {title && <div className="card-header">{title}</div>}
-    <div className="card-body" style={bodyStyle}>{children}</div>
-    {footer && <div className="card-footer">{footer}</div>}
-  </div>
-);
-
-const Btn = ({onClick,children,cls='',disabled,style,type='button'}) => (
-  <button className={`btn ${cls}`} onClick={onClick} disabled={disabled} style={{opacity:disabled?.5:1,...style}} type={type}>
-    {children}
-  </button>
-);
-
-const CodeBlock = ({lines,style}) => (
-  <div className="code-block" style={style}>
-    {(lines||[]).join('\n')}
-  </div>
-);
-
-const CopyBtn = ({text,label='Copy'}) => {
-  const [copied,setCopied] = useState(false);
-  const doCopy = async () => {
-    await copyToClipboard(text);
-    setCopied(true);
-    setTimeout(()=>setCopied(false),1500);
-  };
-  return (
-    <Btn cls={copied?'btn-success':'btn-secondary'} onClick={doCopy}>
-      {copied?'Copied':label}
-    </Btn>
-  );
-};
-
-const DataField = ({label,value,mono,highlight}) => (
-  <div style={{padding:'6px 0',borderBottom:'1px solid var(--border)'}}>
-    <div style={{fontSize:10,fontWeight:600,textTransform:'uppercase',letterSpacing:'.04em',color:'var(--text-muted)',marginBottom:2}}>{label}</div>
-    <div style={{fontFamily:mono?"'SF Mono','Consolas',monospace":'inherit',fontSize:13,color:highlight||'var(--text)',wordBreak:'break-all'}}>{value||'N/A'}</div>
-  </div>
-);
-
-/* ══════════════════════════════════════════════════
-   EVIDENCE LOG (shared state)
-══════════════════════════════════════════════════ */
-const useEvidenceLog = () => {
-  const [entries, setEntries] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('abuse_evidence')||'[]'); } catch { return []; }
-  });
-  const addEntry = useCallback((content, category='NOTE') => {
-    const e = { id: Date.now(), ts: ts(), category, content };
-    setEntries(prev => {
-      const next = [e,...prev];
-      localStorage.setItem('abuse_evidence', JSON.stringify(next));
-      return next;
-    });
-  }, []);
-  const removeEntry = useCallback(id => {
-    setEntries(prev => {
-      const next = prev.filter(e=>e.id!==id);
-      localStorage.setItem('abuse_evidence', JSON.stringify(next));
-      return next;
-    });
-  }, []);
-  const exportAll = useCallback(() => {
-    const txt = entries.map(e=>`[${e.ts}] [${e.category}]\n${e.content}\n${'─'.repeat(60)}`).join('\n');
-    copyToClipboard(txt);
-  }, [entries]);
-  return { entries, addEntry, removeEntry, exportAll };
-};
-
-/* ══════════════════════════════════════════════════
-   TEMPLATES
-══════════════════════════════════════════════════ */
-const DEFAULT_TEMPLATES = {
-  phishing: `Hello,
-
-We are writing to inform you that we have received an abuse report indicating that your hosted service is being used to conduct phishing activity.
-
-This type of activity is in violation of our Acceptable Use Policy. We kindly request that you investigate this matter and remove the offending content within 24 hours of receipt of this notice.
-
-Please reply to this message confirming the actions taken.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-  malware: `Hello,
-
-We have received credible reports that your hosted service is actively distributing malicious software (malware).
-
-The distribution of malware is a serious violation of our Acceptable Use Policy and may also constitute a violation of applicable law. We require immediate remediation of this issue. If no action is taken within 24 hours, we reserve the right to suspend the affected service without further notice.
-
-Please reply to this message confirming the actions taken.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-  spam: `Hello,
-
-We have received multiple abuse complaints indicating that your hosted service is being used as a source of unsolicited bulk email (spam).
-
-This activity is in violation of our Acceptable Use Policy. We ask that you investigate the source of this activity and take immediate corrective action to prevent further occurrences.
-
-Please reply to this message with a summary of the steps taken to resolve this issue.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-  suspension: `Hello,
-
-Due to unresolved abuse complaints associated with your account and a failure to respond within the required timeframe, your service has been suspended pending further investigation.
-
-To request reinstatement, please contact us at abuse@fdcservers.net with a detailed explanation of the steps you have taken to address the reported violations.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-  termination: `Hello,
-
-Following repeated abuse violations and a failure to respond to previous notices, your service has been permanently terminated in accordance with our Acceptable Use Policy.
-
-This decision is final. If you believe this action was taken in error, you may submit a formal appeal to abuse@fdcservers.net within 7 days of this notice.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: URL CHECKER
-══════════════════════════════════════════════════ */
-const URLChecker = ({ addEntry, setReconIP }) => {
-  const [inputText, setInputText] = useState('');
-  const [results, setResults] = useState([]);
-  const [isChecking, setIsChecking] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const checkUrl = async (url) => {
-    try {
-      const res = await fetch('/api/check-url', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({url})
-      });
-      const data = await res.json();
-      if (data.removed===undefined && data.statusCode===undefined)
-        return { url, defanged:defang(url), status:'down', code:'ERR', message:'No result' };
-      if (data.removed)
-        return { url, defanged:defang(url), status:'removed', code:data.statusCode||'N/A', message:data.reason };
-      return { url, defanged:defang(url), status:'up', code:data.statusCode, message:'Reachable' };
-    } catch(e) {
-      return { url, defanged:defang(url), status:'down', code:'ERR', message:e.message };
-    }
-  };
-
-  const handleCheck = async () => {
-    const urls = extractUrls(inputText);
-    if (!urls.length) return alert('No URLs found in input.');
-    setIsChecking(true); setResults([]);
-    const out=[];
-    for (const u of urls) {
-      const r = await checkUrl(u);
-      out.push(r); setResults([...out]);
-      await new Promise(r=>setTimeout(r,500));
-    }
-    setIsChecking(false);
-  };
-
-  const exportResults = () => {
-    const txt = results.map(r=>`${r.status.toUpperCase()} [${r.code}] ${r.defanged}`).join('\n');
-    copyToClipboard(txt); setCopied(true); setTimeout(()=>setCopied(false),1500);
-  };
-
-  const addAllToLog = () => {
-    const txt = results.map(r=>`${r.status.toUpperCase()} | HTTP ${r.code} | ${r.defanged}\n  Normalized: ${r.url}\n  Reason: ${r.message}`).join('\n\n');
-    addEntry(txt, 'URL-CHECK');
-  };
-
-  const statusBadge = s => {
-    if (s==='up')      return <span className="badge badge-green">UP</span>;
-    if (s==='removed') return <span className="badge badge-purple">Removed</span>;
-    return <span className="badge badge-red">Down</span>;
-  };
-
-  return (
-    <div>
-      <div style={{marginBottom:16}}>
-        <label className="label">Paste Abuse Report or Raw Text</label>
-        <textarea
-          className="textarea"
-          rows={7}
-          value={inputText}
-          onChange={e=>setInputText(e.target.value)}
-          placeholder="Paste abuse report here. Defanged URLs (hxxp://, [.]) are auto-normalized."
-        />
-      </div>
-      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:16}}>
-        <Btn onClick={handleCheck} disabled={isChecking}>
-          {isChecking ? 'Checking...' : 'Check URLs'}
-        </Btn>
-        {results.length>0 && <>
-          <Btn cls="btn-secondary" onClick={exportResults}>{copied?'Copied':'Export All'}</Btn>
-          <Btn cls="btn-success" onClick={addAllToLog}>+ Add All to Log</Btn>
-        </>}
-      </div>
-
-      {results.length > 0 && (
-        <Card title={`Results — ${results.length} URL${results.length===1?'':'s'}`}>
-          <div style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'center',gap:'2px 12px',fontSize:11,fontWeight:600,padding:'4px 4px',background:'var(--bg)',color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:8,borderRadius:'6px'}}>
-            <span>Status</span><span>URL</span><span>HTTP</span><span style={{textAlign:'right'}}>Actions</span>
-          </div>
-          {results.map((r,i)=>(
-            <div key={i} className="result-row" style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'start',gap:'8px 12px',marginBottom:0}}>
-              <div style={{paddingTop:2}}>{statusBadge(r.status)}</div>
-              <div>
-                <div style={{fontFamily:"'SF Mono','Consolas',monospace",fontSize:12,wordBreak:'break-all',color:'var(--primary)',fontWeight:500}}>{r.defanged}</div>
-                <div style={{fontFamily:"'SF Mono','Consolas',monospace",fontSize:11,color:'var(--text-muted)',wordBreak:'break-all'}}>{r.url}</div>
-                <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:2}}>{r.message}</div>
-              </div>
-              <div style={{fontFamily:"'SF Mono','Consolas',monospace",fontWeight:700,fontSize:13,color: r.code==='ERR'?'var(--danger)':'var(--text)'}}>{r.code}</div>
-              <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'flex-end'}}>
-                <CopyBtn text={r.defanged} label="Copy"/>
-                <Btn cls="btn-ghost btn-xs" onClick={()=>addEntry(`URL-CHECK | ${r.status.toUpperCase()} | HTTP ${r.code}\nDefanged: ${r.defanged}\nNormalized: ${r.url}\nReason: ${r.message}`,'URL')}>Log</Btn>
-              </div>
-            </div>
-          ))}
-        </Card>
-      )}
-
-      {isChecking && (
-        <div style={{textAlign:'center',padding:24}}>
-          <span style={{fontSize:14,fontWeight:600,color:'var(--primary)'}}>Checking URLs sequentially...</span>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: HEADER ANALYZER
-══════════════════════════════════════════════════ */
-const HeaderAnalyzer = ({ addEntry, setReconIP }) => {
-  const [rawHeaders, setRawHeaders] = useState('');
-  const [analysis, setAnalysis] = useState(null);
-
-  const parseHeaders = () => {
-    const h = rawHeaders;
-    const receivedIPs = [];
-    const receivedLines = h.match(/^Received:[\s\S]*?(?=^\S)/gim)||[];
-    receivedLines.forEach(line=>{
-      const ips = line.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[];
-      ips.forEach(ip=>{ if(!receivedIPs.includes(ip)) receivedIPs.push(ip); });
-    });
-
-    const get = (pattern) => { const m = h.match(pattern); return m ? m[1].trim() : null; };
-    const spf   = get(/spf=(\S+)/i);
-    const dkim  = get(/dkim=(\S+)/i);
-    const dmarc = get(/dmarc=(\S+)/i);
-
-    const fromM    = get(/^From:.*?<([^>]+)>/im) || get(/^From:\s*(\S+@\S+)/im);
-    const replyToM = get(/^Reply-To:.*?<([^>]+)>/im) || get(/^Reply-To:\s*(\S+@\S+)/im);
-    const fromDomain    = fromM    ? fromM.split('@')[1]    : null;
-    const replyToDomain = replyToM ? replyToM.split('@')[1] : null;
-    const spoofWarning  = fromDomain && replyToDomain && fromDomain.toLowerCase()!==replyToDomain.toLowerCase();
-
-    const subjectM = get(/^Subject:\s*(.*)/im);
-
-    setAnalysis({ receivedIPs, spf, dkim, dmarc, from:fromM, replyTo:replyToM, spoofWarning, subject:subjectM });
-  };
-
-  const authBadge = (label, val) => {
-    if (!val) return <span className="badge badge-gray">{label}: N/A</span>;
-    const pass = val.toLowerCase().startsWith('pass');
-    return <span className={`badge ${pass?'badge-green':'badge-red'}`}>{label}: {val.toUpperCase()}</span>;
-  };
-
-  return (
-    <div>
-      <div style={{marginBottom:16}}>
-        <label className="label">Raw Email Headers</label>
-        <textarea className="textarea" rows={9} value={rawHeaders}
-          onChange={e=>setRawHeaders(e.target.value)}
-          placeholder="Paste raw email headers here (Received:, From:, Reply-To:, DKIM-Signature:, etc.)"
-        />
-      </div>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <Btn onClick={parseHeaders}>Analyze Headers</Btn>
-        {analysis && <Btn cls="btn-success" onClick={()=>addEntry(`HEADER ANALYSIS\nSubject: ${analysis.subject||'N/A'}\nFrom: ${analysis.from||'N/A'}\nReply-To: ${analysis.replyTo||'N/A'}\nSPF: ${analysis.spf||'N/A'} | DKIM: ${analysis.dkim||'N/A'} | DMARC: ${analysis.dmarc||'N/A'}\nSPOOF: ${analysis.spoofWarning?'YES - MISMATCH':'NO'}\nIPs: ${analysis.receivedIPs.join(', ')}`,'HEADER')}>+ Log</Btn>}
-      </div>
-
-      {analysis && (
-        <div>
-          {analysis.spoofWarning && (
-            <div className="alert alert-danger">
-              SPOOFING DETECTED: From domain [{analysis.from?.split('@')[1]}] is not equal to Reply-To domain [{analysis.replyTo?.split('@')[1]}]
-            </div>
-          )}
-          <div className="grid-2" style={{gap:16,marginBottom:16}}>
-            <Card title="Auth Results">
-              <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                {authBadge('SPF',analysis.spf)}
-                {authBadge('DKIM',analysis.dkim)}
-                {authBadge('DMARC',analysis.dmarc)}
-              </div>
-            </Card>
-            <Card title="Sender Info">
-              <div style={{display:'flex',flexDirection:'column',gap:2}}>
-                <DataField label="Subject" value={analysis.subject}/>
-                <DataField label="From" value={analysis.from}/>
-                <DataField label="Reply-To" value={analysis.replyTo} highlight={analysis.spoofWarning?'var(--danger)':undefined}/>
-              </div>
-            </Card>
-          </div>
-          <Card title={`Received Chain IPs — ${analysis.receivedIPs.length} found`}>
-            {analysis.receivedIPs.length===0
-              ? <div style={{color:'var(--text-muted)',fontSize:13}}>No IPs extracted.</div>
-              : <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
-                  {analysis.receivedIPs.map((ip,i)=>(
-                    <div key={i} style={{display:'flex',gap:6,alignItems:'center'}}>
-                      <span className="badge badge-blue" style={{fontFamily:"'SF Mono','Consolas',monospace"}}>{ip}</span>
-                      <Btn cls="btn-ghost btn-xs" onClick={()=>setReconIP(ip)}>Recon</Btn>
-                    </div>
-                  ))}
-                </div>
-            }
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: IP RECON
-══════════════════════════════════════════════════ */
-const IPRecon = ({ reconIP, setReconIP }) => {
-  const [ip, setIp] = useState(reconIP||'');
-
-  useEffect(()=>{ if(reconIP){ setIp(reconIP); } }, [reconIP]);
-
-  const lines = ip ? [
-    `# -- WHOIS`,
-    `whois ${ip}`,
-    ``,
-    `# -- RDAP`,
-    `curl -s https://rdap.arin.net/registry/ip/${ip} | python3 -m json.tool`,
-    `curl -s https://rdap.db.ripe.net/ip/${ip} | python3 -m json.tool`,
-    ``,
-    `# -- BGP / ROUTING`,
-    `# https://bgpview.io/ip/${ip}`,
-    `# https://bgp.he.net/ip/${ip}`,
-    `# https://stat.ripe.net/widget/prefix-overview#w.resource=${ip}`,
-    ``,
-    `# -- ABUSEIPDB`,
-    `curl -s -G https://api.abuseipdb.com/api/v2/check \\`,
-    `  --data-urlencode "ipAddress=${ip}" \\`,
-    `  -d maxAgeInDays=90 \\`,
-    `  -H "Key: YOUR_API_KEY" \\`,
-    `  -H "Accept: application/json" | python3 -m json.tool`,
-    ``,
-    `# -- SHODAN`,
-    `shodan host ${ip}`,
-    `shodan search --fields ip_str,port,org,hostnames "ip:${ip}"`,
-    ``,
-    `# -- REVERSE DNS`,
-    `dig -x ${ip} +short`,
-    `host ${ip}`,
-    ``,
-    `# -- GEOLOCATION`,
-    `curl -s https://ipapi.co/${ip}/json/ | python3 -m json.tool`,
-    `curl -s https://ip-api.com/json/${ip} | python3 -m json.tool`,
-  ] : ['# Enter an IP address above to generate recon commands'];
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center'}}>
-        <input className="input" style={{fontFamily:"'SF Mono','Consolas',monospace",maxWidth:220}}
-          value={ip} onChange={e=>setIp(e.target.value)}
-          placeholder="e.g. 192.168.1.1"
-        />
-        <Btn onClick={()=>setReconIP(ip)}>Load</Btn>
-        <CopyBtn text={lines.join('\n')} label="Copy All"/>
-      </div>
-      <CodeBlock lines={lines} style={{minHeight:300}}/>
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: PTR / RDNS
-══════════════════════════════════════════════════ */
-const PTRTool = () => {
-  const [inputText, setInputText] = useState('');
-  const [ips, setIPs] = useState([]);
-
-  const extract = () => {
-    const found = extractIPs(inputText);
-    setIPs(found);
-  };
-
-  const lines = ips.length ? ips.flatMap(ip=>[
-    `# -- ${ip}`,
-    `dig -x ${ip} +short`,
-    `host ${ip}`,
-    `nslookup ${ip}`,
-    `nslookup ${ip} 8.8.8.8`,
-    ``
-  ]) : ['# Paste text above and click Extract IPs'];
-
-  return (
-    <div>
-      <div style={{marginBottom:16}}>
-        <label className="label">Input Text</label>
-        <textarea className="textarea" rows={4} value={inputText}
-          onChange={e=>setInputText(e.target.value)}
-          placeholder="Paste any text containing IP addresses..."
-        />
-      </div>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <Btn onClick={extract}>Extract IPs</Btn>
-        {ips.length>0 && <CopyBtn text={lines.join('\n')}/>}
-      </div>
-      {ips.length>0 && (
-        <div style={{marginBottom:16,display:'flex',flexWrap:'wrap',gap:6,alignItems:'center'}}>
-          <span style={{fontSize:12,fontWeight:600,color:'var(--text-secondary)'}}>Found {ips.length} IP{ips.length===1?'':'s'}:</span>
-          {ips.map((ip,i)=><span key={i} className="badge badge-blue" style={{fontFamily:"'SF Mono','Consolas',monospace"}}>{ip}</span>)}
-        </div>
-      )}
-      <CodeBlock lines={lines} style={{minHeight:200}}/>
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: SUBNET CALCULATOR
-══════════════════════════════════════════════════ */
-const SubnetCalc = () => {
-  const [cidr, setCidr] = useState('');
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState('');
-
-  const calc = () => {
-    const r = calcSubnet(cidr.trim());
-    if (!r) { setError('Invalid CIDR notation. Example: 192.168.1.0/24'); setResult(null); }
-    else { setResult(r); setError(''); }
-  };
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'flex-end'}}>
-        <div>
-          <label className="label">CIDR Notation</label>
-          <input className="input" style={{maxWidth:220}} value={cidr}
-            onChange={e=>setCidr(e.target.value)} placeholder="e.g. 10.0.0.0/8"
-            onKeyDown={e=>e.key==='Enter'&&calc()}
-          />
-        </div>
-        <Btn onClick={calc}>Calculate</Btn>
-        {result && <CopyBtn text={[
-          `Network:   ${result.network}/${result.prefix}`,
-          `Netmask:   ${result.netmask}`,
-          `Broadcast: ${result.broadcast}`,
-          `First IP:  ${result.firstHost}`,
-          `Last IP:   ${result.lastHost}`,
-          `Usable:    ${result.usable.toLocaleString()} hosts`,
-        ].join('\n')}/>}
-      </div>
-      {error && <div className="alert alert-danger">{error}</div>}
-      {result && (
-        <div className="grid-2" style={{gap:16}}>
-          <Card>
-            <DataField label="Network Address" value={result.network} mono/>
-            <DataField label="Subnet Mask" value={result.netmask} mono/>
-            <DataField label="Broadcast Address" value={result.broadcast} mono/>
-            <DataField label="First Host" value={result.firstHost} mono/>
-            <DataField label="Last Host" value={result.lastHost} mono/>
-            <DataField label="Usable Hosts" value={result.usable.toLocaleString()}/>
-            <DataField label="Prefix Length" value={`/${result.prefix}`}/>
-            <DataField label="Total Addresses" value={Math.pow(2,32-result.prefix).toLocaleString()}/>
-          </Card>
-          <CodeBlock lines={[
-            `Network:   ${result.network}/${result.prefix}`,
-            `Netmask:   ${result.netmask}`,
-            `Broadcast: ${result.broadcast}`,
-            `First IP:  ${result.firstHost}`,
-            `Last IP:   ${result.lastHost}`,
-            `Usable:    ${result.usable.toLocaleString()} hosts`,
-          ]}/>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: NETWORK CONFIG GENERATOR
-══════════════════════════════════════════════════ */
-const NetConfigGen = () => {
-  const [iface,  setIface]  = React.useState('eth0');
-  const [cidr,   setCidr]   = React.useState('');
-  const [os,     setOs]     = React.useState('ubuntu');
-  const [result, setResult] = React.useState(null);
-  const [error,  setError]  = React.useState('');
-  const [copied, setCopied] = React.useState(false);
-
-  const ipToNum = ip => ip.split('.').reduce((a,b)=>(a<<8)|parseInt(b),0)>>>0;
-  const numToIp = n => [(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.');
-
-  const parse = () => {
-    const raw = cidr.trim();
-    const match = raw.match(/^(\d+\.\d+\.\d+\.\d+)\/(\d+)$/);
-    if (!match) { setError('Invalid format. Example: 50.7.60.12/29'); setResult(null); return; }
-    const ip   = match[1];
-    const prefix = parseInt(match[2]);
-    if (prefix < 0 || prefix > 32) { setError('Prefix must be 0-32'); setResult(null); return; }
-    const ipNum      = ipToNum(ip);
-    const mask       = prefix === 0 ? 0 : (0xFFFFFFFF << (32 - prefix)) >>> 0;
-    const netNum     = (ipNum & mask) >>> 0;
-    const bcastNum   = (netNum | (~mask >>> 0)) >>> 0;
-    const gatewayNum = ipNum - 1;
-    const netmask    = numToIp(mask);
-    const gateway    = numToIp(gatewayNum);
-    const broadcast  = numToIp(bcastNum);
-    const usable = [];
-    for (let i = ipNum; i < bcastNum; i++) usable.push(numToIp(i));
-    setError('');
-    setResult({ ip, prefix, netmask, gateway, broadcast, usable, netNum: numToIp(netNum) });
-  };
-
-  const genConfig = () => {
-    if (!result) return [];
-    const { ip, prefix, netmask, gateway } = result;
-    const DNS1 = '1.1.1.1';
-    const DNS2 = '8.8.8.8';
-    if (os === 'debian') return [
-      `# /etc/network/interfaces`,
-      `# Debian -- ifupdown`,
-      ``,
-      `auto lo`,
-      `iface lo inet loopback`,
-      ``,
-      `auto ${iface}`,
-      `iface ${iface} inet static`,
-      `    address ${ip}/${prefix}`,
-      `    netmask ${netmask}`,
-      `    gateway ${gateway}`,
-      `    dns-nameservers ${DNS1} ${DNS2}`,
-      ``,
-      `# -- Apply`,
-      `ifdown ${iface} && ifup ${iface}`,
-    ];
-    if (os === 'ubuntu') return [
-      `# /etc/netplan/00-${iface}.yaml`,
-      `# Ubuntu -- Netplan`,
-      ``,
-      `network:`,
-      `  version: 2`,
-      `  ethernets:`,
-      `    ${iface}:`,
-      `      dhcp4: false`,
-      `      addresses:`,
-      `        - ${ip}/${prefix}`,
-      `      routes:`,
-      `        - to: default`,
-      `          via: ${gateway}`,
-      `      nameservers:`,
-      `        addresses: [${DNS1}, ${DNS2}]`,
-      ``,
-      `# -- Apply`,
-      `netplan apply`,
-    ];
-    if (os === 'rhel-nmcli') return [
-      `# RHEL / AlmaLinux / Rocky -- nmcli`,
-      ``,
-      `nmcli con add type ethernet ifname ${iface} con-name ${iface}`,
-      `nmcli con mod ${iface} ipv4.method manual \\`,
-      `    ipv4.addresses ${ip}/${prefix} \\`,
-      `    ipv4.gateway ${gateway} \\`,
-      `    ipv4.dns "${DNS1} ${DNS2}"`,
-      `nmcli con up ${iface}`,
-      ``,
-      `# -- Verify`,
-      `nmcli con show ${iface}`,
-      `ip addr show ${iface}`,
-    ];
-    if (os === 'rhel-file') return [
-      `# /etc/sysconfig/network-scripts/ifcfg-${iface}`,
-      `# RHEL / AlmaLinux / Rocky -- legacy ifcfg`,
-      ``,
-      `TYPE=Ethernet`,
-      `BOOTPROTO=none`,
-      `NAME=${iface}`,
-      `DEVICE=${iface}`,
-      `ONBOOT=yes`,
-      `IPADDR=${ip}`,
-      `PREFIX=${prefix}`,
-      `GATEWAY=${gateway}`,
-      `DNS1=${DNS1}`,
-      `DNS2=${DNS2}`,
-      ``,
-      `# -- Apply`,
-      `nmcli con reload`,
-      `nmcli con up ${iface}`,
-    ];
-    if (os === 'systemd-networkd') return [
-      `# /etc/systemd/network/10-${iface}.network`,
-      `# systemd-networkd`,
-      ``,
-      `[Match]`,
-      `Name=${iface}`,
-      ``,
-      `[Network]`,
-      `Address=${ip}/${prefix}`,
-      `Gateway=${gateway}`,
-      `DNS=${DNS1}`,
-      `DNS=${DNS2}`,
-      ``,
-      `# -- Apply`,
-      `systemctl restart systemd-networkd`,
-      `networkctl status ${iface}`,
-    ];
-    return [];
-  };
-
-  const lines = genConfig();
-
-  const doCopy = () => {
-    const txt = lines.join('\n');
-    const el = document.createElement('textarea');
-    el.value = txt; document.body.appendChild(el);
-    el.select(); document.execCommand('copy');
-    document.body.removeChild(el);
-    setCopied(true); setTimeout(()=>setCopied(false),1500);
-  };
-
-  const OS_OPTS = [
-    { id:'ubuntu',            label:'Ubuntu (Netplan)' },
-    { id:'debian',            label:'Debian (interfaces)' },
-    { id:'rhel-nmcli',        label:'RHEL/Alma/Rocky (nmcli)' },
-    { id:'rhel-file',         label:'RHEL/Alma/Rocky (ifcfg)' },
-    { id:'systemd-networkd',  label:'systemd-networkd' },
-  ];
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap',alignItems:'flex-end'}}>
-        <div>
-          <label className="label">Interface</label>
-          <input className="input" style={{width:110}} value={iface}
-            onChange={e=>setIface(e.target.value)} placeholder="eth0"
-            onKeyDown={e=>e.key==='Enter'&&parse()}
-          />
-        </div>
-        <div>
-          <label className="label">IP / CIDR</label>
-          <input className="input" style={{width:180}} value={cidr}
-            onChange={e=>setCidr(e.target.value)} placeholder="50.7.60.12/29"
-            onKeyDown={e=>e.key==='Enter'&&parse()}
-          />
-        </div>
-        <Btn onClick={parse}>Generate</Btn>
-        {lines.length > 0 && (
-          <Btn cls={copied?'btn-success':'btn-secondary'} onClick={doCopy}>{copied?'Copied':'Copy'}</Btn>
-        )}
-      </div>
-
-      <div style={{display:'flex',gap:4,marginBottom:16,flexWrap:'wrap'}}>
-        {OS_OPTS.map(o=>(
-          <Btn key={o.id} cls={os===o.id?'':'btn-secondary'} onClick={()=>setOs(o.id)}>{o.label}</Btn>
-        ))}
-      </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {result && (
-        <div className="grid-2" style={{gap:16}}>
-          <Card title="Network Info">
-            <DataField label="Assigned IP" value={`${result.ip}/${result.prefix}`} mono/>
-            <DataField label="Netmask" value={result.netmask} mono/>
-            <DataField label="Gateway" value={result.gateway} mono/>
-            <DataField label="Broadcast" value={result.broadcast} mono/>
-            <DataField label="DNS" value="1.1.1.1, 8.8.8.8"/>
-            <DataField label="Usable IPs" value={result.usable.join(', ')} mono/>
-          </Card>
-          <CodeBlock lines={lines} style={{minHeight:220}}/>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: PORT SCAN GENERATOR
-══════════════════════════════════════════════════ */
-const PortScanGen = () => {
-  const [ip, setIp] = useState('');
-  const [target, setTarget] = useState('');
-
-  const gen = () => setTarget(ip.trim());
-
-  const lines = target ? [
-    `# TARGET: ${target}`,
-    ``,
-    `# -- QUICK SCAN (Top 1000 ports)`,
-    `nmap -T4 -F ${target}`,
-    ``,
-    `# -- FULL TCP SCAN (All 65535 ports)`,
-    `nmap -sS -T4 -p- ${target}`,
-    `nmap -sT -T4 -p- ${target}  # Non-root fallback`,
-    ``,
-    `# -- UDP SCAN (Common UDP ports)`,
-    `nmap -sU -T4 --top-ports 200 ${target}`,
-    `nmap -sU -p 53,67,68,69,123,161,500,514 ${target}`,
-    ``,
-    `# -- SERVICE & VERSION DETECTION`,
-    `nmap -sV -sC -T4 -p- ${target}`,
-    `nmap -sV --version-intensity 9 -T4 ${target}`,
-    ``,
-    `# -- OS DETECTION`,
-    `nmap -O -T4 ${target}`,
-    `nmap -A -T4 ${target}  # Aggressive (OS+scripts+traceroute)`,
-    ``,
-    `# -- VULNERABILITY SCRIPTS`,
-    `nmap --script vuln -T4 -p- ${target}`,
-    `nmap --script=http-vuln*,ssl*,smb-vuln* -T4 ${target}`,
-    `nmap --script exploit -T4 ${target}`,
-    ``,
-    `# -- SPECIFIC PORT TARGETS`,
-    `nmap -sV -p 22,80,443,8080,8443,3306,5432,27017 ${target}`,
-    `nmap -sV -p 21,22,23,25,53,110,143,445,3389 ${target}`,
-    ``,
-    `# -- STEALTH SCAN OPTIONS`,
-    `nmap -sS -T2 --randomize-hosts -D RND:10 -p- ${target}`,
-    `nmap -sF -T2 ${target}  # FIN scan (IDS evasion)`,
-    `nmap -sN -T2 ${target}  # NULL scan (IDS evasion)`,
-  ] : ['# Enter an IP or hostname above to generate nmap commands'];
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <input className="input" style={{maxWidth:240}} value={ip}
-          onChange={e=>setIp(e.target.value)} placeholder="e.g. 192.168.1.1 or example.com"
-          onKeyDown={e=>e.key==='Enter'&&gen()}
-        />
-        <Btn onClick={gen}>Generate</Btn>
-        {target && <CopyBtn text={lines.join('\n')}/>}
-      </div>
-      <CodeBlock lines={lines} style={{minHeight:340}}/>
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: ACL BUILDER
-══════════════════════════════════════════════════ */
-const ACLBuilder = () => {
-  const [input, setInput] = useState('');
-  const [format, setFormat] = useState('iptables');
-
-  const items = input.split('\n').map(s=>s.trim()).filter(Boolean);
-
-  const genIPTables = () => {
-    if (!items.length) return ['# Enter IPs or CIDRs above (one per line)'];
-    return [
-      `# -- BLOCK RULES`,
-      ...items.map(ip=>`iptables -I INPUT -s ${ip} -j DROP`),
-      `iptables -I FORWARD -s ${items[0]||'<IP>'} -j DROP`,
-      ``,
-      `# -- SAVE RULES`,
-      `iptables-save > /etc/iptables/rules.v4`,
-      `service iptables save`,
-      ``,
-      `# -- REMOVE RULES`,
-      ...items.map(ip=>`iptables -D INPUT -s ${ip} -j DROP`),
-      ``,
-      `# -- VERIFY`,
-      `iptables -L INPUT -n --line-numbers | grep DROP`,
-    ];
-  };
-
-  const genNFTables = () => {
-    if (!items.length) return ['# Enter IPs or CIDRs above'];
-    return [
-      `# -- CREATE SET & ADD RULES`,
-      `nft add table inet abuse_block`,
-      `nft add chain inet abuse_block input '{ type filter hook input priority 0; policy accept; }'`,
-      `nft add set inet abuse_block blocklist '{ type ipv4_addr; flags interval; }'`,
-      ``,
-      `# -- ADD IPs TO SET`,
-      ...items.map(ip=>`nft add element inet abuse_block blocklist { ${ip} }`),
-      ``,
-      `# -- APPLY RULE`,
-      `nft add rule inet abuse_block input ip saddr @blocklist drop`,
-      ``,
-      `# -- LIST / VERIFY`,
-      `nft list set inet abuse_block blocklist`,
-      `nft list ruleset`,
-      ``,
-      `# -- REMOVE`,
-      ...items.map(ip=>`nft delete element inet abuse_block blocklist { ${ip} }`),
-    ];
-  };
-
-  const genUFW = () => {
-    if (!items.length) return ['# Enter IPs or CIDRs above'];
-    return [
-      `# -- BLOCK`,
-      ...items.map(ip=>`ufw deny from ${ip} to any`),
-      ``,
-      `# -- VERIFY`,
-      `ufw status numbered`,
-      ``,
-      `# -- REMOVE (use rule number from status)`,
-      ...items.map((_,i)=>`ufw delete <rule_number_for_${items[i]}>`),
-      ``,
-      `# -- RELOAD`,
-      `ufw reload`,
-    ];
-  };
-
-  const lines = format==='iptables' ? genIPTables() : format==='nftables' ? genNFTables() : genUFW();
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}>
-        <span style={{fontWeight:600,fontSize:12,color:'var(--text-secondary)'}}>Format:</span>
-        {['iptables','nftables','ufw'].map(f=>(
-          <Btn key={f} cls={format===f?'':'btn-secondary'} onClick={()=>setFormat(f)}>{f}</Btn>
-        ))}
-        <CopyBtn text={lines.join('\n')}/>
-      </div>
-      <div className="grid-2" style={{gap:16}}>
-        <div>
-          <label className="label">IPs / CIDRs (one per line)</label>
-          <textarea className="textarea" rows={12} value={input}
-            onChange={e=>setInput(e.target.value)}
-            placeholder={"192.168.1.1\n10.0.0.0/8\n2001:db8::1"}
-          />
-          <div style={{marginTop:4,fontSize:11,color:'var(--text-muted)'}}>{items.length} entr{items.length===1?'y':'ies'}</div>
-        </div>
-        <CodeBlock lines={lines} style={{minHeight:220,height:'100%'}}/>
-      </div>
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: RESPONSE GENERATOR + TEMPLATES
-══════════════════════════════════════════════════ */
-const ResponseGenerator = ({ addEntry }) => {
-  const [templates, setTemplates] = useState(()=>{
-    try { return JSON.parse(localStorage.getItem('abuse_templates')||JSON.stringify(DEFAULT_TEMPLATES)); }
-    catch { return DEFAULT_TEMPLATES; }
-  });
-  const [selectedTpl, setSelectedTpl] = useState('phishing');
-  const [editingTpl, setEditingTpl] = useState('');
-  const [editMode, setEditMode] = useState(false);
-  const [response, setResponse] = useState('');
-  const [ticketAge, setTicketAge] = useState('');
-  const [copied, setCopied] = useState(false);
-
-  const ESCALATIONS = {
-    '24h': `Hello,
-
-This is a follow-up to our previous abuse notice. As of the time of this message, we have not received a response or confirmation of remediation.
-
-We ask that you respond within 24 hours with an update on the steps taken to resolve this matter. Failure to do so may result in suspension of the affected service.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-    '48h': `Hello,
-
-As 48 hours have elapsed since our initial abuse notice without a satisfactory response or resolution, the affected service has been suspended pending investigation.
-
-To have your service reinstated, please contact us at abuse@fdcservers.net with confirmation of the corrective actions taken.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-    '72h': `Hello,
-
-As 72 hours have passed since our initial abuse notice without adequate response or resolution, and following the suspension of your service, we have proceeded with permanent termination of the affected service in accordance with our Acceptable Use Policy.
-
-If you wish to dispute this decision, please contact abuse@fdcservers.net within 7 days of this notice.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-    'resolved': `Hello,
-
-Thank you for your prompt attention to this matter. We have verified that the reported content has been removed and the issue has been resolved to our satisfaction.
-
-This ticket is now closed. Please do not hesitate to contact us should you have any further questions.
-
---
-FDCServers Abuse Department
-abuse@fdcservers.net`,
-  };
-
-  const useTemplate = () => { setResponse(templates[selectedTpl]||''); };
-  const useEscalation = () => { if(ticketAge) setResponse(ESCALATIONS[ticketAge]||''); };
-
-  const saveTemplate = () => {
-    const updated = {...templates, [selectedTpl]:editingTpl};
-    setTemplates(updated);
-    localStorage.setItem('abuse_templates',JSON.stringify(updated));
-    setEditMode(false);
-  };
-
-  const doCopy = async() => {
-    await copyToClipboard(response);
-    setCopied(true); setTimeout(()=>setCopied(false),1500);
-  };
-
-  return (
-    <div>
-      <div className="grid-2" style={{gap:16,marginBottom:16}}>
-        <Card title="Templates">
-          <div style={{marginBottom:12}}>
-            <select className="select" style={{width:'100%',marginBottom:8}}
-              value={selectedTpl} onChange={e=>{setSelectedTpl(e.target.value);setEditMode(false);}}>
-              {Object.keys(templates).map(k=>(
-                <option key={k} value={k}>{k.toUpperCase()}</option>
-              ))}
-            </select>
-            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-              <Btn onClick={useTemplate}>Use</Btn>
-              <Btn cls="btn-secondary" onClick={()=>{setEditingTpl(templates[selectedTpl]||'');setEditMode(!editMode);}}>
-                {editMode?'Cancel':'Edit'}
-              </Btn>
-              {editMode && <Btn cls="btn-success" onClick={saveTemplate}>Save</Btn>}
-            </div>
-          </div>
-          {editMode && (
-            <textarea className="textarea" rows={8} value={editingTpl}
-              onChange={e=>setEditingTpl(e.target.value)}/>
-          )}
-          {!editMode && (
-            <div className="code-block" style={{fontSize:11,minHeight:80,whiteSpace:'pre-wrap'}}>
-              {templates[selectedTpl]||''}
-            </div>
-          )}
-        </Card>
-
-        <Card title="Escalation Shortcuts">
-          <div style={{marginBottom:12}}>
-            <select className="select" style={{width:'100%',marginBottom:8}}
-              value={ticketAge} onChange={e=>setTicketAge(e.target.value)}>
-              <option value="">-- Select Escalation --</option>
-              <option value="24h">24h - Follow-up Reminder</option>
-              <option value="48h">48h - Suspension Notice</option>
-              <option value="72h">72h - Termination Notice</option>
-              <option value="resolved">Resolved - Close Ticket</option>
-            </select>
-            <Btn onClick={useEscalation} disabled={!ticketAge}>Load Escalation</Btn>
-          </div>
-          <div style={{fontSize:12,color:'var(--text-secondary)',lineHeight:1.8}}>
-            <div>24h - Reminder to customer</div>
-            <div>48h - Service suspended</div>
-            <div>72h - Service terminated</div>
-            <div>Resolved - Close ticket</div>
-          </div>
-        </Card>
-      </div>
-
-      <Card title="Response Editor">
-        <textarea className="textarea" rows={12} value={response}
-          onChange={e=>setResponse(e.target.value)}
-          placeholder="Select a template or escalation above, or type your response here..."
-        />
-        <div style={{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}}>
-          <Btn cls={copied?'btn-success':''} onClick={doCopy}>{copied?'Copied':'Copy to Clipboard'}</Btn>
-          <Btn cls="btn-success" onClick={()=>addEntry(response,'RESPONSE')}>+ Add to Evidence Log</Btn>
-          <Btn cls="btn-ghost" onClick={()=>setResponse('')}>Clear</Btn>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-
-/* ══════════════════════════════════════════════════
-   TOOL: WHOIS LOOKUP
-══════════════════════════════════════════════════ */
-const WhoisLookup = () => {
-  const [query, setQuery] = useState('');
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const lookup = async () => {
-    const q = query.trim();
-    if (!q) return;
-    setLoading(true); setResult(null); setError('');
-    try {
-      const isIP = /^\d{1,3}(\.\d{1,3}){3}$/.test(q);
-      let url = isIP
-        ? `https://rdap.arin.net/registry/ip/${q}`
-        : `https://rdap.verisign.com/com/v1/domain/${q}`;
-      let res = await fetch(url);
-      if (!res.ok && !isIP) {
-        res = await fetch(`https://rdap.org/domain/${q}`);
-      }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setResult({ raw: data, isIP, query: q });
-    } catch(e) {
-      setError(`RDAP lookup failed: ${e.message}. Use: whois ${q}`);
-    }
-    setLoading(false);
-  };
-
-  const renderIP = (d) => {
-    const name   = d.name || 'N/A';
-    const handle = d.handle || 'N/A';
-    const org    = d.entities?.find(e=>e.roles?.includes('registrant'));
-    const orgName= org?.vcardArray?.[1]?.find(v=>v[0]==='fn')?.[3] || org?.handle || 'N/A';
-    const abuse  = d.entities?.flatMap(e=>e.entities||[]).find(e=>e.roles?.includes('abuse'));
-    const abuseEmail = abuse?.vcardArray?.[1]?.find(v=>v[0]==='email')?.[3] || 'N/A';
-    const country= d.country || 'N/A';
-    const startAddr = d.startAddress || 'N/A';
-    const endAddr   = d.endAddress   || 'N/A';
-    const cidr   = d.cidr0_cidrs?.[0] ? `${d.cidr0_cidrs[0].v4prefix}/${d.cidr0_cidrs[0].length}` : 'N/A';
-    return [
-      ['Handle', handle], ['Name', name], ['Organization', orgName],
-      ['Country', country], ['CIDR', cidr],
-      ['Start IP', startAddr], ['End IP', endAddr],
-      ['Abuse Contact', abuseEmail],
-    ];
-  };
-
-  const renderDomain = (d) => {
-    const registrant = d.entities?.find(e=>e.roles?.includes('registrant'));
-    const registrar  = d.entities?.find(e=>e.roles?.includes('registrar'));
-    const getVcard = (e, field) => e?.vcardArray?.[1]?.find(v=>v[0]===field)?.[3] || 'N/A';
-    const events = {};
-    (d.events||[]).forEach(ev=>{ events[ev.eventAction]=ev.eventDate?.slice(0,10)||'N/A'; });
-    return [
-      ['Domain', d.ldhName || d.unicodeName || 'N/A'],
-      ['Status', (d.status||[]).join(', ') || 'N/A'],
-      ['Registrar', getVcard(registrar,'fn')],
-      ['Registrant', getVcard(registrant,'fn')],
-      ['Registrant Email', getVcard(registrant,'email')],
-      ['Registered', events['registration'] || 'N/A'],
-      ['Updated', events['last changed'] || 'N/A'],
-      ['Expires', events['expiration'] || 'N/A'],
-      ['Nameservers', (d.nameservers||[]).map(n=>n.ldhName).join(', ') || 'N/A'],
-    ];
-  };
-
-  const rows = result ? (result.isIP ? renderIP(result.raw) : renderDomain(result.raw)) : [];
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <input className="input" style={{maxWidth:300}} value={query}
-          onChange={e=>setQuery(e.target.value)}
-          onKeyDown={e=>e.key==='Enter'&&lookup()}
-          placeholder="e.g. 1.2.3.4 or example.com"
-        />
-        <Btn onClick={lookup} disabled={loading}>
-          {loading ? 'Looking up...' : 'Whois Lookup'}
-        </Btn>
-        {result && <CopyBtn text={rows.map(([k,v])=>`${k}: ${v}`).join('\n')}/>}
-      </div>
-
-      {error && (
-        <div>
-          <div className="alert alert-danger" style={{marginBottom:12}}>{error}</div>
-          <CodeBlock lines={[`whois ${query.trim()}`]}/>
-        </div>
-      )}
-
-      {result && (
-        <div className="grid-2" style={{gap:16}}>
-          <Card title={`${result.isIP?'IP':'Domain'} RDAP Result - ${result.query}`}>
-            {rows.map(([label,val],i)=>(
-              <DataField key={i} label={label} value={val} mono highlight={i===0?'var(--primary)':undefined}/>
-            ))}
-          </Card>
-          <Card title="CLI Equivalent">
-            <CodeBlock lines={[
-              `whois ${query.trim()}`,
-              ``,
-              `# RDAP (JSON):`,
-              `curl -s https://rdap.org/${result.isIP?'ip':'domain'}/${result.query} | python3 -m json.tool`,
-            ]}/>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: ABUSE CONTACT FINDER
-══════════════════════════════════════════════════ */
-const AbuseContactFinder = () => {
-  const [query, setQuery] = useState('');
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const lookup = async () => {
-    const q = query.trim();
-    if (!q) return;
-    setLoading(true); setResult(null); setError('');
-    try {
-      const isIP = /^\d{1,3}(\.\d{1,3}){3}$/.test(q);
-      const url = isIP
-        ? `https://rdap.arin.net/registry/ip/${q}`
-        : `https://rdap.org/domain/${q}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      const allEntities = [];
-      const walk = (entities) => {
-        (entities||[]).forEach(e => { allEntities.push(e); walk(e.entities); });
-      };
-      walk(data.entities);
-
-      const abuseEnt = allEntities.find(e=>e.roles?.includes('abuse'));
-      const getVcard = (e, f) => e?.vcardArray?.[1]?.find(v=>v[0]===f)?.[3];
-      const email  = getVcard(abuseEnt,'email') || 'Not found';
-      const phone  = getVcard(abuseEnt,'tel')   || 'Not found';
-      const name   = getVcard(abuseEnt,'fn')    || abuseEnt?.handle || 'Not found';
-      const org    = allEntities.find(e=>e.roles?.includes('registrant'));
-      const orgName= getVcard(org,'fn') || org?.handle || 'N/A';
-      const handle = data.handle || 'N/A';
-      const netName= data.name   || 'N/A';
-
-      setResult({ email, phone, name, orgName, handle, netName, isIP, query: q });
-    } catch(e) {
-      setError(`Lookup failed: ${e.message}`);
-    }
-    setLoading(false);
-  };
-
-  const found = result && result.email !== 'Not found';
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <input className="input" style={{maxWidth:300}} value={query}
-          onChange={e=>setQuery(e.target.value)}
-          onKeyDown={e=>e.key==='Enter'&&lookup()}
-          placeholder="e.g. 1.2.3.4 or domain.com"
-        />
-        <Btn onClick={lookup} disabled={loading}>
-          {loading ? 'Looking up...' : 'Find Abuse Contact'}
-        </Btn>
-      </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {result && (
-        <div className="grid-2" style={{gap:16}}>
-          <Card title={`Abuse Contact - ${result.query}`}>
-            <div style={{marginBottom:12}}>
-              <span className={`badge ${found?'badge-green':'badge-red'}`}>
-                {found ? 'Contact Found' : 'No Abuse Contact'}
-              </span>
-            </div>
-            {[
-              ['Organization', result.orgName],
-              ['Network', result.netName],
-              ['Handle', result.handle],
-              ['Abuse Contact Name', result.name],
-              ['Abuse Email', result.email],
-              ['Abuse Phone', result.phone],
-            ].map(([label,val],i)=>(
-              <DataField key={i} label={label} value={val}
-                mono={label.includes('Email')||label.includes('Phone')||label==='Handle'}
-                highlight={label==='Abuse Email'&&found?'var(--primary)':undefined}/>
-            ))}
-            {found && (
-              <div style={{marginTop:12,display:'flex',gap:8}}>
-                <CopyBtn text={result.email} label="Copy Email"/>
-                <CopyBtn text={`To: ${result.email}\nSubject: Abuse Report - ${result.query}\n\nHello,\n\nWe are reporting abuse originating from ${result.query} under your network.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`} label="Copy Draft"/>
-              </div>
-            )}
-          </Card>
-          <Card title="CLI Lookup">
-            <CodeBlock lines={[
-              `# RDAP abuse contact lookup:`,
-              `curl -s https://rdap.arin.net/registry/ip/${result.query} \\`,
-              `  | python3 -m json.tool | grep -i abuse`,
-              ``,
-              `# Direct WHOIS:`,
-              `whois ${result.query} | grep -i abuse`,
-              ``,
-              `# ARIN abuse report form:`,
-              `# https://www.arin.net/resources/registry/abuse/`,
-            ]}/>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: URL DEFANGER / REFANGER
-══════════════════════════════════════════════════ */
-const DefangTool = () => {
-  const [input, setInput] = useState('');
-  const [mode, setMode] = useState('defang');
-
-  const process = (text) => {
-    if (!text.trim()) return '';
-    const lines = text.split('\n');
-    return lines.map(line => {
-      if (mode === 'defang') {
-        return line
-          .replace(/https:\/\//gi, 'hxxps://')
-          .replace(/http:\/\//gi,  'hxxp://')
-          .replace(/\./g, '[.]')
-          .replace(/:/g, '[:]');
-      } else {
-        return line
-          .replace(/hxxps:\/\//gi, 'https://')
-          .replace(/hxxp:\/\//gi,  'http://')
-          .replace(/\[\.\]|\(\.\)/g, '.')
-          .replace(/\[:\]/g, ':');
-      }
-    }).join('\n');
-  };
-
-  const output = process(input);
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16,alignItems:'center'}}>
-        <span style={{fontWeight:600,fontSize:12,color:'var(--text-secondary)'}}>Mode:</span>
-        <Btn cls={mode==='defang'?'':'btn-secondary'} onClick={()=>setMode('defang')}>Defang</Btn>
-        <Btn cls={mode==='refang'?'':'btn-secondary'} onClick={()=>setMode('refang')}>Refang</Btn>
-      </div>
-      <div className="grid-2" style={{gap:16}}>
-        <div>
-          <label className="label">
-            {mode==='defang' ? 'Raw Input (live URLs / IPs)' : 'Defanged Input'}
-          </label>
-          <textarea className="textarea" rows={14} value={input}
-            onChange={e=>setInput(e.target.value)}
-            placeholder={mode==='defang'
-              ? 'https://evil.com/phish\n192.168.1.1'
-              : 'hxxps://evil[.]com/phish\n192[.]168[.]1[.]1'}
-          />
-        </div>
-        <div>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-            <label className="label" style={{marginBottom:0}}>
-              {mode==='defang' ? 'Defanged Output' : 'Refanged Output'}
-            </label>
-            <CopyBtn text={output}/>
-          </div>
-          <div className="code-block" style={{minHeight:242,whiteSpace:'pre-wrap',wordBreak:'break-all',color:output?'var(--code-text)':'var(--text-muted)'}}>
-            {output || '# Output will appear here'}
-          </div>
-        </div>
-      </div>
-      <div style={{marginTop:12,fontSize:12,color:'var(--text-muted)'}}>
-        <strong>Defang:</strong> Converts URLs to safe-to-share IOC format (hxxps://, [.], [:]) | <strong>Refang:</strong> Restores IOCs to working URLs for analysis
-      </div>
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: BASE64 / URL DECODE
-══════════════════════════════════════════════════ */
-const DecodeTool = () => {
-  const [input, setInput] = useState('');
-  const [mode, setMode] = useState('b64decode');
-
-  const MODES = [
-    { id:'b64decode', label:'Base64 Decode' },
-    { id:'b64encode', label:'Base64 Encode' },
-    { id:'urldecode', label:'URL Decode' },
-    { id:'urlencode', label:'URL Encode' },
-    { id:'hexdecode', label:'Hex Decode' },
-    { id:'htmldecode', label:'HTML Entity Decode' },
-  ];
-
-  const process = () => {
-    const t = input.trim();
-    if (!t) return '';
-    try {
-      switch(mode) {
-        case 'b64decode': {
-          const bin = atob(t);
-          try { return decodeURIComponent(escape(bin)); } catch { return bin; }
-        }
-        case 'b64encode': return btoa(unescape(encodeURIComponent(t)));
-        case 'urldecode': return decodeURIComponent(t.replace(/\+/g,' '));
-        case 'urlencode': return encodeURIComponent(t);
-        case 'hexdecode': {
-          const hex = t.replace(/\s+/g,'').replace(/^0x/i,'');
-          if (!/^[0-9a-fA-F]+$/.test(hex)) return 'Invalid hex string';
-          let out='';
-          for(let i=0;i<hex.length;i+=2) out+=String.fromCharCode(parseInt(hex.substr(i,2),16));
-          return out;
-        }
-        case 'htmldecode': {
-          const txt = document.createElement('textarea');
-          txt.innerHTML = t;
-          return txt.value;
-        }
-        default: return t;
-      }
-    } catch(e) {
-      return `Error: ${e.message}`;
-    }
-  };
-
-  const output = process();
-  const isError = output.startsWith('Error');
-
-  const looksB64 = /^[A-Za-z0-9+/]{16,}={0,2}$/.test(output.trim());
-  const looksUrl = output.includes('%');
-  const layerHint = !isError && (looksB64 ? 'Output may contain another Base64 layer' : looksUrl ? 'Output may contain URL-encoded content' : '');
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:4,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
-        <span style={{fontWeight:600,fontSize:12,color:'var(--text-secondary)',marginRight:4}}>Mode:</span>
-        {MODES.map(m=>(
-          <Btn key={m.id} cls={mode===m.id?'':'btn-secondary'} onClick={()=>setMode(m.id)} style={{fontSize:12,padding:'5px 12px'}}>{m.label}</Btn>
-        ))}
-      </div>
-      <div className="grid-2" style={{gap:16}}>
-        <div>
-          <label className="label">Input</label>
-          <textarea className="textarea" rows={14} value={input} onChange={e=>setInput(e.target.value)}
-            placeholder={mode==='b64decode'?'Paste Base64 encoded string...':
-              mode==='urldecode'?'Paste URL-encoded string... (%20, %3A, etc.)':
-              mode==='hexdecode'?'Paste hex string... (0x414243 or 41 42 43)':
-              mode==='htmldecode'?'Paste HTML with entities... (&amp; &lt; etc.)':
-              'Paste text to encode...'}
-          />
-        </div>
-        <div>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-            <label className="label" style={{marginBottom:0}}>Output</label>
-            {!isError && <CopyBtn text={output}/>}
-          </div>
-          <div className="code-block" style={{minHeight:242,whiteSpace:'pre-wrap',wordBreak:'break-all',color:isError?'#f87171':'var(--code-text)'}}>
-            {output || '# Output will appear here'}
-          </div>
-          {layerHint && (
-            <div style={{marginTop:8,fontSize:12,color:'var(--warning)',background:'var(--warning-light)',padding:'6px 10px',borderRadius:6,border:'1px solid #fcd34d'}}>
-              {layerHint}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: HASH CHECKER
-══════════════════════════════════════════════════ */
-const HashChecker = () => {
-  const [input, setInput] = useState('');
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const HASH_PATTERNS = {
-    MD5:    /\b[a-fA-F0-9]{32}\b/g,
-    SHA1:   /\b[a-fA-F0-9]{40}\b/g,
-    SHA256: /\b[a-fA-F0-9]{64}\b/g,
-    SHA512: /\b[a-fA-F0-9]{128}\b/g,
-  };
-
-  const extractHashes = (text) => {
-    const found = [];
-    const seen = new Set();
-    Object.entries(HASH_PATTERNS).forEach(([type, re]) => {
-      const matches = [...new Set(text.match(re)||[])];
-      matches.forEach(h => {
-        if (!seen.has(h)) { seen.add(h); found.push({ hash: h, type }); }
-      });
-    });
-    return found;
-  };
-
-  const checkHashes = async () => {
-    const hashes = extractHashes(input);
-    if (!hashes.length) { alert('No hashes detected in input.'); return; }
-    setLoading(true);
-    setResults(hashes.map(h => ({ ...h, status: 'checking', vtUrl: null, malicious: null, total: null })));
-
-    const checked = [];
-    for (const h of hashes) {
-      const vtUrl = `https://www.virustotal.com/gui/file/${h.hash}`;
-      const otxUrl = `https://otx.alienvault.com/indicator/file/${h.hash}`;
-      const mbUrl  = `https://www.malwarebazaar.org/browse.php?search[tag]=${h.hash}`;
-      checked.push({ ...h, status: 'lookup-ready', vtUrl, otxUrl, mbUrl });
-      setResults([...checked]);
-    }
-    setLoading(false);
-  };
-
-  const [hashOutput, setHashOutput] = useState({});
-  const computeHashes = async () => {
-    const enc = new TextEncoder().encode(input);
-    const algs = [['SHA-1','sha1'],['SHA-256','sha256'],['SHA-512','sha512']];
-    const out = {};
-    for (const [alg, key] of algs) {
-      const buf = await crypto.subtle.digest(alg, enc);
-      out[key] = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    }
-    setHashOutput(out);
-    setResults([]);
-  };
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
-        <Btn onClick={checkHashes} disabled={loading}>
-          {loading ? 'Extracting...' : 'Extract & Check Hashes'}
-        </Btn>
-        <Btn cls="btn-ghost" onClick={computeHashes} style={{color:'var(--purple)',border:'1px solid var(--purple)'}}>
-          Compute Hashes of Input Text
-        </Btn>
-      </div>
-
-      <div className="grid-2" style={{gap:16,marginBottom:16}}>
-        <div>
-          <label className="label">Input (paste hashes or text to hash)</label>
-          <textarea className="textarea" rows={8} value={input} onChange={e=>setInput(e.target.value)}
-            placeholder="Paste MD5/SHA1/SHA256/SHA512 hashes or any text to compute its hash..."
-          />
-        </div>
-        {Object.keys(hashOutput).length > 0 && (
-          <Card title="Computed Hashes (of input text)">
-            {[['SHA-1','sha1'],['SHA-256','sha256'],['SHA-512','sha512']].map(([label,key])=>(
-              <div key={key} style={{marginBottom:10}}>
-                <div style={{fontWeight:600,fontSize:11,color:'var(--text-secondary)',marginBottom:2}}>{label}</div>
-                <div style={{fontFamily:"'SF Mono','Consolas',monospace",fontSize:12,wordBreak:'break-all',background:'var(--bg)',padding:'6px 8px',borderRadius:6,border:'1px solid var(--border)'}}>
-                  {hashOutput[key]}
-                </div>
-                <div style={{marginTop:4}}><CopyBtn text={hashOutput[key]} label={`Copy ${label}`}/></div>
-              </div>
-            ))}
-          </Card>
-        )}
-      </div>
-
-      {results.length > 0 && (
-        <Card title={`Hash Lookup - ${results.length} hash(es) found`}>
-          <div style={{marginBottom:8,fontSize:12,color:'var(--text-muted)'}}>
-            No API key required - links open directly in threat intel platforms
-          </div>
-          {results.map((r,i)=>(
-            <div key={i} className="result-row" style={{marginBottom:0}}>
-              <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:6,flexWrap:'wrap'}}>
-                <span className="badge badge-purple">{r.type}</span>
-                <span style={{fontFamily:"'SF Mono','Consolas',monospace",fontSize:12,wordBreak:'break-all',color:'var(--primary)'}}>{r.hash}</span>
-              </div>
-              <div style={{display:'flex',gap:10,flexWrap:'wrap',fontSize:13}}>
-                <a href={r.vtUrl} target="_blank" rel="noopener">VirusTotal</a>
-                <a href={r.otxUrl} target="_blank" rel="noopener">AlienVault OTX</a>
-                <a href={r.mbUrl} target="_blank" rel="noopener">MalwareBazaar</a>
-                <CopyBtn text={r.hash} label="Copy Hash"/>
-              </div>
-            </div>
-          ))}
-        </Card>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: EMAIL HEADER PARSER (advanced)
-══════════════════════════════════════════════════ */
-const EmailHeaderParser = ({ addEntry, setReconIP }) => {
-  const [raw, setRaw] = useState('');
-  const [parsed, setParsed] = useState(null);
-
-  const parse = () => {
-    const h = raw;
-    const get = (re) => { const m = h.match(re); return m?m[1].trim():null; };
-
-    const receivedBlocks = [];
-    const rcvRe = /^(Received:[\s\S]*?)(?=^\S)/gim;
-    let m;
-    while((m=rcvRe.exec(h))!==null) {
-      const block = m[1];
-      const ips = [...new Set(block.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[])];
-      const byHost = block.match(/by\s+(\S+)/i)?.[1] || null;
-      const fromHost = block.match(/from\s+(\S+)/i)?.[1] || null;
-      const dateM = block.match(/;\s*(.+)$/m)?.[1]?.trim() || null;
-      receivedBlocks.push({ ips, byHost, fromHost, date: dateM, raw: block.trim() });
-    }
-
-    const spf    = get(/spf=(\S+)/i);
-    const dkim   = get(/dkim=(\S+)/i);
-    const dmarc  = get(/dmarc=(\S+)/i);
-    const from   = get(/^From:.*?<([^>]+)>/im) || get(/^From:\s*(\S+@\S+)/im);
-    const to     = get(/^To:.*?<([^>]+)>/im)   || get(/^To:\s*(\S+@\S+)/im);
-    const replyTo= get(/^Reply-To:.*?<([^>]+)>/im) || get(/^Reply-To:\s*(\S+@\S+)/im);
-    const subject= get(/^Subject:\s*(.*)/im);
-    const msgId  = get(/^Message-ID:\s*<?([^>\s]+)/im);
-    const xMailer= get(/^X-Mailer:\s*(.*)/im);
-    const xOrigIP= get(/^X-Originating-IP:\s*([\d.]+)/im);
-    const contentType = get(/^Content-Type:\s*(.*)/im);
-
-    const fromDomain    = from?.split('@')[1];
-    const replyToDomain = replyTo?.split('@')[1];
-    const spoofWarning  = fromDomain && replyToDomain && fromDomain.toLowerCase()!==replyToDomain.toLowerCase();
-
-    const returnPath = get(/^Return-Path:.*?<([^>]+)>/im) || get(/^Return-Path:\s*(\S+@\S+)/im);
-    const returnPathDomain = returnPath?.split('@')[1];
-    const returnMismatch = fromDomain && returnPathDomain && fromDomain.toLowerCase()!==returnPathDomain.toLowerCase();
-
-    const allIPs = [...new Set(receivedBlocks.flatMap(b=>b.ips))];
-    if (xOrigIP && !allIPs.includes(xOrigIP)) allIPs.unshift(xOrigIP);
-
-    setParsed({ receivedBlocks, spf, dkim, dmarc, from, to, replyTo, subject, msgId, xMailer, xOrigIP,
-                contentType, spoofWarning, returnMismatch, returnPath, fromDomain, replyToDomain, allIPs });
-  };
-
-  const authBadge = (label, val) => {
-    if (!val) return <span className="badge badge-gray">{label}: N/A</span>;
-    const pass = val.toLowerCase().startsWith('pass');
-    return <span className={`badge ${pass?'badge-green':'badge-red'}`}>{label}: {val.toUpperCase()}</span>;
-  };
-
-  const logEntry = () => {
-    if (!parsed) return;
-    const txt = [
-      `EMAIL HEADER ANALYSIS`,
-      `Subject: ${parsed.subject||'N/A'}`,
-      `From: ${parsed.from||'N/A'}`,
-      `To: ${parsed.to||'N/A'}`,
-      `Reply-To: ${parsed.replyTo||'N/A'}`,
-      `Return-Path: ${parsed.returnPath||'N/A'}`,
-      `SPF: ${parsed.spf||'N/A'} | DKIM: ${parsed.dkim||'N/A'} | DMARC: ${parsed.dmarc||'N/A'}`,
-      `Spoofing: ${parsed.spoofWarning?'YES - FROM/REPLY-TO MISMATCH':'NO'}`,
-      `Return-Path Mismatch: ${parsed.returnMismatch?'YES':'NO'}`,
-      `X-Originating-IP: ${parsed.xOrigIP||'N/A'}`,
-      `IPs in chain: ${parsed.allIPs.join(', ')||'none'}`,
-    ].join('\n');
-    addEntry(txt, 'HEADER');
-  };
-
-  return (
-    <div>
-      <div style={{marginBottom:16}}>
-        <label className="label">Raw Email Headers</label>
-        <textarea className="textarea" rows={8} value={raw} onChange={e=>setRaw(e.target.value)}
-          placeholder="Paste full raw email headers here..."
-        />
-      </div>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <Btn onClick={parse}>Parse Headers</Btn>
-        {parsed && <Btn cls="btn-success" onClick={logEntry}>+ Log to Evidence</Btn>}
-      </div>
-
-      {parsed && (
-        <div>
-          {(parsed.spoofWarning || parsed.returnMismatch) && (
-            <div className="alert alert-danger">
-              {parsed.spoofWarning && <div>SPOOF: From [{parsed.fromDomain}] is not equal to Reply-To [{parsed.replyToDomain}]</div>}
-              {parsed.returnMismatch && <div>RETURN-PATH MISMATCH: From [{parsed.fromDomain}] is not equal to Return-Path [{parsed.returnPath?.split('@')[1]}]</div>}
-            </div>
-          )}
-
-          <div className="grid-2" style={{gap:16,marginBottom:16}}>
-            <Card title="Auth Results">
-              <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                {authBadge('SPF',parsed.spf)}
-                {authBadge('DKIM',parsed.dkim)}
-                {authBadge('DMARC',parsed.dmarc)}
-              </div>
-            </Card>
-            <Card title="Sender Info">
-              <div style={{display:'flex',flexDirection:'column',gap:2}}>
-                <DataField label="Subject" value={parsed.subject}/>
-                <DataField label="From" value={parsed.from}/>
-                <DataField label="To" value={parsed.to}/>
-                <DataField label="Reply-To" value={parsed.replyTo} highlight={parsed.spoofWarning?'var(--danger)':undefined}/>
-                <DataField label="Return-Path" value={parsed.returnPath} highlight={parsed.returnMismatch?'var(--danger)':undefined}/>
-                <DataField label="X-Orig-IP" value={parsed.xOrigIP} mono/>
-                <DataField label="X-Mailer" value={parsed.xMailer}/>
-                <DataField label="Message-ID" value={parsed.msgId} mono/>
-              </div>
-            </Card>
-          </div>
-
-          <Card title={`Received Chain - ${parsed.receivedBlocks.length} hop(s) | ${parsed.allIPs.length} unique IP(s)`}>
-            {parsed.allIPs.length > 0 && (
-              <div style={{marginBottom:12,display:'flex',flexWrap:'wrap',gap:6,alignItems:'center'}}>
-                <span style={{fontWeight:600,fontSize:12}}>IPs:</span>
-                {parsed.allIPs.map((ip,i)=>(
-                  <div key={i} style={{display:'flex',gap:4,alignItems:'center'}}>
-                    <span className="badge badge-blue" style={{fontFamily:"'SF Mono','Consolas',monospace"}}>{ip}</span>
-                    <Btn cls="btn-ghost btn-xs" onClick={()=>setReconIP(ip)}>Recon</Btn>
-                  </div>
-                ))}
-              </div>
-            )}
-            {parsed.receivedBlocks.map((b,i)=>(
-              <div key={i} style={{marginBottom:8,border:'1px solid var(--border)',padding:10,borderRadius:6,background:i%2?'var(--bg)':'var(--surface)',fontFamily:"'SF Mono','Consolas',monospace",fontSize:12}}>
-                <div style={{fontWeight:700,color:'var(--primary)',marginBottom:4,fontFamily:'Inter,sans-serif',fontSize:13}}>Hop {i+1}</div>
-                {b.fromHost && <div><span style={{color:'var(--text-muted)'}}>From: </span>{b.fromHost}</div>}
-                {b.byHost   && <div><span style={{color:'var(--text-muted)'}}>By:   </span>{b.byHost}</div>}
-                {b.date     && <div><span style={{color:'var(--text-muted)'}}>Date: </span>{b.date}</div>}
-                {b.ips.length>0 && <div><span style={{color:'var(--text-muted)'}}>IPs:  </span>{b.ips.join(', ')}</div>}
-              </div>
-            ))}
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: ASN EXPLORER
-══════════════════════════════════════════════════ */
-const ASNExplorer = () => {
-  const [query, setQuery] = useState('');
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const lookup = async () => {
-    const q = query.trim().toUpperCase().replace(/^AS/i,'');
-    if (!q) return;
-    setLoading(true); setResult(null); setError('');
-    try {
-      const res = await fetch(`https://rdap.arin.net/registry/autnum/${q}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      const org = data.entities?.find(e=>e.roles?.includes('registrant'));
-      const getVcard = (e, f) => e?.vcardArray?.[1]?.find(v=>v[0]===f)?.[3];
-      const abuseEnt = data.entities?.flatMap(e=>e.entities||[]).find(e=>e.roles?.includes('abuse'));
-
-      setResult({
-        asn: data.handle || `AS${q}`,
-        name: data.name || 'N/A',
-        org: getVcard(org,'fn') || org?.handle || 'N/A',
-        country: data.country || 'N/A',
-        abuseEmail: getVcard(abuseEnt,'email') || 'N/A',
-        startAutnum: data.startAutnum || 'N/A',
-        endAutnum: data.endAutnum || 'N/A',
-        status: (data.status||[]).join(', ') || 'N/A',
-        raw: data,
-      });
-    } catch(e) {
-      setError(`Lookup failed: ${e.message}. Try: https://bgpview.io/asn/${q.replace('AS','')}`);
-    }
-    setLoading(false);
-  };
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <input className="input" style={{maxWidth:200}} value={query}
-          onChange={e=>setQuery(e.target.value)}
-          onKeyDown={e=>e.key==='Enter'&&lookup()}
-          placeholder="e.g. AS15169 or 15169"
-        />
-        <Btn onClick={lookup} disabled={loading}>
-          {loading ? 'Looking up...' : 'ASN Lookup'}
-        </Btn>
-        {result && <CopyBtn text={Object.entries(result).filter(([k])=>k!=='raw').map(([k,v])=>`${k}: ${v}`).join('\n')}/>}
-      </div>
-
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {result && (
-        <div className="grid-2" style={{gap:16}}>
-          <Card title={`ASN Details - ${result.asn}`}>
-            {[
-              ['ASN', result.asn],
-              ['Name', result.name],
-              ['Organization', result.org],
-              ['Country', result.country],
-              ['Status', result.status],
-              ['Autnum Range', `${result.startAutnum} - ${result.endAutnum}`],
-              ['Abuse Email', result.abuseEmail],
-            ].map(([label,val],i)=>(
-              <DataField key={i} label={label} value={val} mono={label==='ASN'||label==='Autnum Range'||label==='Abuse Email'}
-                highlight={label==='ASN'?'var(--primary)':undefined}/>
-            ))}
-          </Card>
-          <Card title="Links & CLI">
-            <CodeBlock lines={[
-              `# BGP / routing info:`,
-              `# https://bgpview.io/asn/${result.asn.replace('AS','')}`,
-              `# https://bgp.he.net/${result.asn}`,
-              `# https://stat.ripe.net/widget/asn-neighbours#w.resource=${result.asn}`,
-              ``,
-              `# Prefixes announced by this ASN:`,
-              `# https://bgpview.io/asn/${result.asn.replace('AS','')}/prefixes`,
-              ``,
-              `# WHOIS:`,
-              `whois -h whois.arin.net ${result.asn}`,
-            ]}/>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   TOOL: REPEAT OFFENDER TRACKER
-══════════════════════════════════════════════════ */
-const OffenderTracker = () => {
-  const [offenders, setOffenders] = useState(()=>{
-    try { return JSON.parse(localStorage.getItem('abuse_offenders')||'[]'); } catch { return []; }
-  });
-  const [query, setQuery] = useState('');
-  const [newIp, setNewIp] = useState('');
-  const [newNote, setNewNote] = useState('');
-  const [newType, setNewType] = useState('phishing');
-  const [checkResult, setCheckResult] = useState(null);
-
-  const save = (data) => {
-    setOffenders(data);
-    localStorage.setItem('abuse_offenders', JSON.stringify(data));
-  };
-
-  const addOffender = () => {
-    const ip = newIp.trim();
-    if (!ip) return;
-    const existing = offenders.find(o=>o.ip===ip);
-    const entry = {
-      ip,
-      type: newType,
-      note: newNote.trim(),
-      ts: ts(),
-    };
-    if (existing) {
-      const updated = offenders.map(o=>o.ip===ip
-        ? {...o, count:(o.count||1)+1, lastSeen:ts(), history:[...(o.history||[]),entry]}
-        : o
-      );
-      save(updated);
-    } else {
-      save([{ip, count:1, type:newType, note:newNote.trim(), firstSeen:ts(), lastSeen:ts(), history:[entry]}, ...offenders]);
-    }
-    setNewIp(''); setNewNote('');
-  };
-
-  const checkIP = () => {
-    const q = query.trim();
-    const found = offenders.find(o=>o.ip===q);
-    setCheckResult({ q, found });
-  };
-
-  const remove = (ip) => save(offenders.filter(o=>o.ip!==ip));
-
-  const TYPES = ['phishing','malware','spam','ddos','brute-force','other'];
-
-  return (
-    <div>
-      <div className="grid-2" style={{gap:16,marginBottom:16}}>
-        <Card title="Check IP / Domain">
-          <div style={{display:'flex',gap:8,marginBottom:12}}>
-            <input className="input" value={query} onChange={e=>setQuery(e.target.value)}
-              onKeyDown={e=>e.key==='Enter'&&checkIP()}
-              placeholder="Enter IP or domain to check..."
-              style={{flex:1}}
-            />
-            <Btn onClick={checkIP}>Check</Btn>
-          </div>
-          {checkResult && (
-            <div className={checkResult.found?'alert alert-danger':'alert alert-success'}>
-              {checkResult.found
-                ? `REPEAT OFFENDER - ${checkResult.q} - ${checkResult.found.count} offense(s) - Last: ${checkResult.found.lastSeen} - Type: ${checkResult.found.type}`
-                : `CLEAN - ${checkResult.q} - No prior offenses on record`
-              }
-            </div>
-          )}
-        </Card>
-
-        <Card title="Log New Offense">
-          <div style={{display:'flex',flexDirection:'column',gap:8}}>
-            <input className="input" value={newIp} onChange={e=>setNewIp(e.target.value)}
-              placeholder="IP or domain..." onKeyDown={e=>e.key==='Enter'&&addOffender()}
-            />
-            <select className="select" style={{width:'100%'}} value={newType} onChange={e=>setNewType(e.target.value)}>
-              {TYPES.map(t=><option key={t} value={t}>{t.toUpperCase()}</option>)}
-            </select>
-            <input className="input" value={newNote} onChange={e=>setNewNote(e.target.value)}
-              placeholder="Optional note / ticket ref..."
-            />
-            <Btn cls="btn-success" onClick={addOffender}>+ Log Offense</Btn>
-          </div>
-        </Card>
-      </div>
-
-      <Card title={`Offender Database - ${offenders.length} record(s)`}>
-        {offenders.length===0
-          ? <div style={{padding:24,textAlign:'center',color:'var(--text-muted)',fontSize:13}}>No records</div>
-          : (
-            <div style={{maxHeight:400,overflowY:'auto'}}>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 100px 80px 1fr auto',background:'var(--bg)',padding:'8px 12px',fontWeight:600,fontSize:11,textTransform:'uppercase',letterSpacing:'.04em',color:'var(--text-muted)',gap:8,borderBottom:'1px solid var(--border)',position:'sticky',top:0}}>
-                <span>IP / Domain</span><span>Type</span><span>Count</span><span>Last Seen</span><span></span>
-              </div>
-              {offenders.map((o,i)=>(
-                <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 100px 80px 1fr auto',padding:'8px 12px',borderBottom:'1px solid var(--border)',background:o.count>=3?'var(--danger-light)':i%2?'#fafbfc':'var(--surface)',gap:8,alignItems:'center'}}>
-                  <span style={{fontFamily:"'SF Mono','Consolas',monospace",fontSize:12,wordBreak:'break-all',color:o.count>=3?'var(--danger)':'var(--primary)',fontWeight:o.count>=3?'700':'500'}}>
-                    {o.count>=3 && '!! '}{o.ip}
-                  </span>
-                  <span className={`badge ${o.type==='phishing'?'badge-red':o.type==='malware'?'badge-purple':o.type==='spam'?'badge-yellow':'badge-gray'}`} style={{fontSize:10}}>{o.type}</span>
-                  <span style={{fontFamily:"'SF Mono','Consolas',monospace",fontSize:14,fontWeight:700,color:o.count>=3?'var(--danger)':'var(--text)'}}>{o.count}</span>
-                  <span style={{fontFamily:"'SF Mono','Consolas',monospace",fontSize:12,color:'var(--text-muted)'}}>{o.lastSeen}</span>
-                  <Btn cls="btn-danger btn-xs" onClick={()=>remove(o.ip)}>Remove</Btn>
-                </div>
-              ))}
-            </div>
-          )
-        }
-      </Card>
-    </div>
-  );
-};
-
-
-
-/* ══════════════════════════════════════════════════
-   TOOL: EVIDENCE LOG
-══════════════════════════════════════════════════ */
-const EvidenceLog = ({ entries, removeEntry, exportAll, addEntry }) => {
-  const [note, setNote] = useState('');
-  const [filter, setFilter] = useState('ALL');
-  const cats = ['ALL','URL','HEADER','RESPONSE','NOTE','URL-CHECK'];
-  const visible = filter==='ALL' ? entries : entries.filter(e=>e.category===filter);
-
-  return (
-    <div>
-      <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
-        <span style={{fontWeight:600,fontSize:12,color:'var(--text-secondary)'}}>FILTER:</span>
-        {cats.map(c=>(
-          <Btn key={c} cls={filter===c?'':'btn-secondary'} style={{fontSize:11,padding:'4px 10px'}}
-            onClick={()=>setFilter(c)}>{c}</Btn>
-        ))}
-        <Btn cls="btn-success" onClick={exportAll} style={{marginLeft:'auto'}}>Export All</Btn>
-      </div>
-
-      <div style={{display:'flex',gap:8,marginBottom:16}}>
-        <input className="input" value={note} onChange={e=>setNote(e.target.value)}
-          placeholder="Add a note to evidence log..."
-          onKeyDown={e=>{if(e.key==='Enter'&&note.trim()){addEntry(note.trim(),'NOTE');setNote('');}}}
-          style={{flex:1}}
-        />
-        <Btn cls="btn-success" onClick={()=>{if(note.trim()){addEntry(note.trim(),'NOTE');setNote('');}}}>+ Add Note</Btn>
-      </div>
-
-      <div style={{border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',background:'var(--surface)',maxHeight:480,overflowY:'auto'}}>
-        {visible.length===0
-          ? <div style={{padding:24,textAlign:'center',color:'var(--text-muted)',fontSize:13}}>
-              No entries
-            </div>
-          : visible.map(e=>(
-            <div key={e.id} className="log-entry">
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                  <span className={`badge ${
-                    e.category==='URL'||e.category==='URL-CHECK'?'badge-blue':
-                    e.category==='HEADER'?'badge-purple':
-                    e.category==='RESPONSE'?'badge-green':'badge-gray'
-                  }`} style={{fontSize:10}}>{e.category}</span>
-                  <span style={{color:'var(--text-muted)',fontSize:11}}>{e.ts}</span>
-                </div>
-                <Btn cls="btn-danger btn-xs" onClick={()=>removeEntry(e.id)}>Remove</Btn>
-              </div>
-              <div style={{whiteSpace:'pre-wrap',wordBreak:'break-all',color:'var(--text)',fontSize:13,fontFamily:"'SF Mono','Consolas',monospace"}}>{e.content}</div>
-            </div>
-          ))
-        }
-      </div>
-      <div style={{marginTop:6,fontSize:12,color:'var(--text-muted)'}}>
-        {visible.length} entr{visible.length===1?'y':'ies'} {filter!=='ALL'?`(filtered: ${filter})`:'total'}
-      </div>
-    </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════
-   MAIN APP
-══════════════════════════════════════════════════ */
-const TABS = [
-  { id:'url',        label:'URL Checker',        group:'Analysis' },
-  { id:'emailparse', label:'Email Headers',      group:'Analysis' },
-  { id:'headers',    label:'Header Analyzer',    group:'Analysis' },
-  { id:'recon',      label:'IP Recon',           group:'Recon' },
-  { id:'whois',      label:'Whois',              group:'Recon' },
-  { id:'abusecon',   label:'Abuse Contact',      group:'Recon' },
-  { id:'asn',        label:'ASN Explorer',       group:'Recon' },
-  { id:'ptr',        label:'PTR/RDNS',           group:'Network' },
-  { id:'subnet',     label:'Subnet Calc',        group:'Network' },
-  { id:'netconfig',  label:'Net Config Gen',     group:'Network' },
-  { id:'portscan',   label:'Port Scan Gen',      group:'Network' },
-  { id:'acl',        label:'ACL Builder',        group:'Network' },
-  { id:'defang',     label:'Defang/Refang',      group:'Utilities' },
-  { id:'decode',     label:'Decode/Encode',      group:'Utilities' },
-  { id:'hash',       label:'Hash Checker',       group:'Utilities' },
-  { id:'offender',   label:'Offender Tracker',   group:'Utilities' },
-  { id:'response',   label:'Response Gen',       group:'Utilities' },
-  { id:'evidence',   label:'Evidence Log',       group:'' },
+/* ═══════════════ UTILITIES ═══════════════ */
+const ts=()=>new Date().toISOString().replace('T',' ').slice(0,19);
+const normDef=t=>t.replace(/hxxps:\/\//gi,'https://').replace(/hxxp:\/\//gi,'http://').replace(/\[\.\]|\(\.\)/g,'.').replace(/\[:\]/g,':');
+const defang=u=>u.replace(/https:\/\//gi,'hxxps://').replace(/http:\/\//gi,'hxxp://').replace(/\./g,'[.]');
+const extUrls=t=>{const n=normDef(t);return[...new Set(n.match(/https?:\/\/[^\s"'<>]+/gi)||[])];};
+const extIPs=t=>[...new Set((t.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[]))];
+const cp=async t=>{try{await navigator.clipboard.writeText(t);return true}catch{return false}};
+const calcSub=cidr=>{const[i,b]=cidr.split('/');const p=parseInt(b);if(isNaN(p)||p<0||p>32)return null;const ip=i.split('.').map(Number);if(ip.length!==4||ip.some(x=>isNaN(x)||x<0||x>255))return null;const n=ip.reduce((a,b)=>(a<<8)|b,0)>>>0;const m=p===0?0:(0xFFFFFFFF<<(32-p))>>>0;const nw=(n&m)>>>0;const bc=(nw|(~m>>>0))>>>0;const i2=n=>[24,16,8,0].map(s=>(n>>s)&0xff).join('.');return{net:i2(nw),msk:i2(m),bcast:i2(bc),first:p>=31?i2(nw):i2(nw+1),last:p>=31?i2(bc):i2(bc-1),use:p>=31?(p===31?2:1):Math.pow(2,32-p)-2,p}};
+
+/* ═══════════════ TOAST ═══════════════ */
+const TC=React.createContext({t:()=>{}});
+const TP=({children})=>{const[toasts,setToasts]=useState([]);const t=useCallback((msg,type='info')=>{const id=Date.now();setToasts(p=>[...p,{id,msg,type}]);setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),3000)},[]);return(<TC.Provider value={{t}}>{children}<div className="tc">{toasts.map(t=>(<div key={t.id} className={`toast ${t.type==='success'?'ts2':t.type==='error'?'te2':'ti2'}`}><span>{t.type==='success'?'✓':t.type==='error'?'✕':'ℹ'}</span><span>{t.msg}</span></div>))}</div></TC.Provider>)};
+const useT=()=>React.useContext(TC);
+
+/* ═══════════════ CMD PALETTE ═══════════════ */
+const CmdP=({tabs,onSel,onClose})=>{const[q,setQ]=useState('');const[sel,setSel]=useState(0);const ir=useRef(null);useEffect(()=>{ir.current?.focus()},[]);const f=useMemo(()=>{if(!q)return tabs;const ql=q.toLowerCase();return tabs.filter(t=>t.l.toLowerCase().includes(ql)||t.g.toLowerCase().includes(ql))},[q,tabs]);useEffect(()=>setSel(0),[q]);const hk=e=>{if(e.key==='ArrowDown'){e.preventDefault();setSel(s=>Math.min(s+1,f.length-1))}if(e.key==='ArrowUp'){e.preventDefault();setSel(s=>Math.max(s-1,0))}if(e.key==='Enter'&&f[sel]){onSel(f[sel].id);onClose()}if(e.key==='Escape')onClose()};return(<div className="co" onClick={onClose}><div className="cp" onClick={e=>e.stopPropagation()}><input ref={ir} className="ci2" placeholder="Search tools or type a command..." value={q} onChange={e=>setQ(e.target.value)} onKeyDown={hk}/><div className="cr">{f.length===0&&<div style={{padding:16,textAlign:'center',color:'var(--t3)',fontSize:12}}>No tools found</div>}{f.map((t,i)=>(<div key={t.id} className={`cm ${i===sel?'sel':''}`} onClick={()=>{onSel(t.id);onClose()}}><span className="cic">{t.i||'◇'}</span><span style={{flex:1}}>{t.l}</span><span style={{fontSize:10,color:'var(--t3)'}}>{t.g}</span></div>))}</div></div></div>)};
+
+/* ═══════════════ EVIDENCE LOG ═══════════════ */
+const useLog=()=>{const[entries,setEntries]=useState(()=>{try{return JSON.parse(localStorage.getItem('abuse_evidence')||'[]')}catch{return[]}});const add=useCallback((content,category='NOTE')=>{const e={id:Date.now(),ts,c:content,cat:category};setEntries(p=>{const n=[e,...p];localStorage.setItem('abuse_evidence',JSON.stringify(n));return n})},[]);const rm=useCallback(id=>{setEntries(p=>{const n=p.filter(e=>e.id!==id);localStorage.setItem('abuse_evidence',JSON.stringify(n));return n})},[]);const clr=useCallback(()=>{setEntries([]);localStorage.removeItem('abuse_evidence')},[]);const exp=useCallback(()=>{const txt=entries.map(e=>`[${e.ts}] [${e.cat}]\n${e.c}\n${'─'.repeat(60)}`).join('\n');cp(txt)},[entries]);return{entries,add,rm,clr,exp}};
+
+/* ═══════════════ UI PRIMITIVES ═══════════════ */
+const Card=({title,children,footer,className,style,hr})=>(<div className={`card ${className||''}`} style={style}>{title&&<div className="ch"><span style={{flex:1}}>{title}</span>{hr}{children&&null}</div>}<div className="cb2" style={className==='cb2'?undefined:{}}>{children}</div>{footer&&<div className="cf">{footer}</div>}</div>);
+const Btn=({onClick,children,cls='',disabled,style})=>(<button className={`btn ${cls}`} onClick={onClick} disabled={disabled} style={{opacity:disabled?.5:1,...style}}>{children}</button>);
+const Code=({lines,style})=>(<div className="code" style={style}>{(lines||[]).join('\n')}</div>);
+const Cpy=({text,label='Copy'})=>{const[ok,setOk]=useState(false);const{t}=useT();const go=async()=>{if(await cp(text)){setOk(true);t('Copied to clipboard','success')}setTimeout(()=>setOk(false),1500)};return(<Btn cls={ok?'bg2':'bs'} onClick={go}>{ok?'Copied':label}</Btn>)};
+const DF=({label,value,mono,hl})=>(<div className="df"><div className="dl">{label}</div><div className={`dv${mono?' m':''}`} style={hl?{color:hl}:undefined}>{value||'N/A'}</div></div>);
+const Spin=()=><span style={{display:'inline-block',width:13,height:13,border:'2px solid var(--border)',borderTopColor:'var(--accent)',borderRadius:'50%',animation:'spin .6s linear infinite'}}/>;
+
+/* ═══════════════ TEMPLATES ═══════════════ */
+const TPL={phishing:`Hello,\n\nWe are writing to inform you that we have received an abuse report indicating that your hosted service is being used to conduct phishing activity.\n\nThis type of activity is in violation of our Acceptable Use Policy. We kindly request that you investigate this matter and remove the offending content within 24 hours of receipt of this notice.\n\nPlease reply to this message confirming the actions taken.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`,malware:`Hello,\n\nWe have received credible reports that your hosted service is actively distributing malicious software (malware).\n\nThe distribution of malware is a serious violation of our Acceptable Use Policy and may also constitute a violation of applicable law. We require immediate remediation of this issue. If no action is taken within 24 hours, we reserve the right to suspend the affected service without further notice.\n\nPlease reply to this message confirming the actions taken.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`,spam:`Hello,\n\nWe have received multiple abuse complaints indicating that your hosted service is being used as a source of unsolicited bulk email (spam).\n\nThis activity is in violation of our Acceptable Use Policy. We ask that you investigate the source of this activity and take immediate corrective action to prevent further occurrences.\n\nPlease reply to this message with a summary of the steps taken to resolve this issue.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`,suspension:`Hello,\n\nDue to unresolved abuse complaints associated with your account and a failure to respond within the required timeframe, your service has been suspended pending further investigation.\n\nTo request reinstatement, please contact us at abuse@fdcservers.net with a detailed explanation of the steps you have taken to address the reported violations.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`,termination:`Hello,\n\nFollowing repeated abuse violations and a failure to respond to previous notices, your service has been permanently terminated in accordance with our Acceptable Use Policy.\n\nThis decision is final. If you believe this action was taken in error, you may submit a formal appeal to abuse@fdcservers.net within 7 days of this notice.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`};
+
+/* ═══════════════ DASHBOARD ═══════════════ */
+const Dash=({entries,setTab})=>{const now=new Date();const hr=now.getHours();const greet=hr<12?'Good morning':hr<18?'Good afternoon':'Good evening';const urlC=entries.filter(e=>e.cat==='URL'||e.cat==='URL-CHECK').length;const hC=entries.filter(e=>e.cat==='HEADER').length;const off=(()=>{try{return JSON.parse(localStorage.getItem('abuse_offenders')||'[]')}catch{return[]}})();const qa=[{i:'🔗',l:'URL Checker',d:'Check if URLs are active',id:'url'},{i:'📧',l:'Email Headers',d:'Parse email headers',id:'emailparse'},{i:'🌐',l:'IP Recon',d:'Gather IP intelligence',id:'recon'},{i:'🔍',l:'Whois Lookup',d:'Domain & IP info',id:'whois'},{i:'🔒',l:'Defang/Refang',d:'Safe URL conversion',id:'defang'},{i:'🔓',l:'Decode/Encode',d:'Base64, URL, Hex',id:'decode'}];return(<div className="au"><div style={{marginBottom:24}}><h1 style={{fontSize:24,fontWeight:800,color:'var(--t1)',letterSpacing:'-.03em',marginBottom:3}}>{greet}</h1><p style={{fontSize:13,color:'var(--t2)'}}>Abuse Operations Console — ready for action</p></div><div className="g4" style={{marginBottom:20}}><div className="sc sa"><div className="sv2">Log Entries</div><div className="sv">{entries.length}</div><div className="ss2">Evidence records</div></div><div className="sc sg"><div className="sv2">URL Checks</div><div className="sv">{urlC}</div><div className="ss2">URLs investigated</div></div><div className="sc sp"><div className="sv2">Headers</div><div className="sv">{hC}</div><div className="ss2">Emails parsed</div></div><div className="sc sr"><div className="sv2">Offenders</div><div className="sv">{off.length}</div><div className="ss2">Tracked IPs</div></div></div><h2 style={{fontSize:14,fontWeight:700,marginBottom:12,color:'var(--t1)'}}>Quick Actions</h2><div className="g3" style={{marginBottom:24}}>{qa.map(t=>(<div key={t.id} className="qa" onClick={()=>setTab(t.id)}><div className="qi">{t.i}</div><div className="ql">{t.l}</div><div className="qd">{t.d}</div></div>))}</div>{entries.length>0&&<Card title="Recent Activity" hr={<Btn cls="bgh bx" onClick={()=>setTab('evidence')}>View All</Btn>}><div className="tl">{entries.slice(0,6).map(e=>(<div key={e.id} className="ti3"><div className="td"/><div className="tt2">{e.ts}</div><div className="tc2"><span className="badge b-a" style={{marginRight:5,fontSize:9}}>{e.cat}</span>{e.c.slice(0,90)}{e.c.length>90?'...':''}</div></div>))}</div></Card>}</div>)};
+
+/* ═══════════════ URL CHECKER ═══════════════ */
+const URLChk=({addEntry,setReconIP})=>{const[it,setIt]=useState('');const[res,setRes]=useState([]);const[busy,setBusy]=useState(false);const{t}=useT();const chk=async u=>{try{const r=await fetch('/api/check-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})});const d=await r.json();if(d.removed===undefined&&d.statusCode===undefined)return{url:u,def:defang(u),st:'down',code:'ERR',msg:'No result'};if(d.removed)return{url:u,def:defang(u),st:'removed',code:d.statusCode||'N/A',msg:d.reason};return{url:u,def:defang(u),st:'up',code:d.statusCode,msg:'Reachable'}}catch(e){return{url:u,def:defang(u),st:'down',code:'ERR',msg:e.message}}};const go=async()=>{const urls=extUrls(it);if(!urls.length)return t('No URLs found','error');setBusy(true);setRes([]);const o=[];for(const u of urls){const r=await chk(u);o.push(r);setRes([...o]);await new Promise(r=>setTimeout(r,500))}setBusy(false);t(`Checked ${urls.length} URL${urls.length>1?'s':''}`,'success')};const aLog=()=>{const txt=res.map(r=>`${r.st.toUpperCase()} | HTTP ${r.code} | ${r.def}\n  Normalized: ${r.url}\n  Reason: ${r.msg}`).join('\n\n');addEntry(txt,'URL-CHECK');t(`Added ${res.length} results to log`,'success')};const sB=s=>{if(s==='up')return<span className="badge b-g">UP</span>;if(s==='removed')return<span className="badge b-p">REMOVED</span>;return<span className="badge b-r">DOWN</span>};return(<div className="au"><div style={{marginBottom:16}}><label className="lb">Paste Abuse Report or Raw Text</label><textarea className="ta" rows={7} value={it} onChange={e=>setIt(e.target.value)} placeholder="Paste abuse report here. Defanged URLs (hxxp://, [.]) are auto-normalized."/></div><div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:16}}><Btn onClick={go} disabled={busy}>{busy?<><Spin/> Checking...</>:'Check URLs'}</Btn>{res.length>0&&<><Cpy text={res.map(r=>`${r.st.toUpperCase()} [${r.code}] ${r.def}`).join('\n')} label="Export"/><Btn cls="bg2" onClick={aLog}>+ Add All to Log</Btn></>}</div>{res.length>0&&<Card title={`Results — ${res.length} URL${res.length===1?'':'s'}`}>{res.map((r,i)=>(<div key={i} className="rr" style={{display:'grid',gridTemplateColumns:'auto 1fr auto auto',alignItems:'start',gap:'8px 12px',marginBottom:0}}><div style={{paddingTop:2}}>{sB(r.st)}</div><div><div style={{fontFamily:"var(--mono)",fontSize:12,wordBreak:'break-all',color:'var(--accent2)',fontWeight:500}}>{r.def}</div><div style={{fontFamily:"var(--mono)",fontSize:11,color:'var(--t3)',wordBreak:'break-all'}}>{r.url}</div><div style={{fontSize:12,color:'var(--t2)',marginTop:2}}>{r.msg}</div></div><div style={{fontFamily:"var(--mono)",fontWeight:700,fontSize:13,color:r.code==='ERR'?'var(--red)':'var(--t1)'}}>{r.code}</div><div style={{display:'flex',flexDirection:'column',gap:3,alignItems:'flex-end'}}><Cpy text={r.def} label="Copy"/><Btn cls="bgh bx" onClick={()=>addEntry(`URL-CHECK | ${r.st.toUpperCase()} | HTTP ${r.code}\nDefanged: ${r.def}\nNormalized: ${r.url}\nReason: ${r.msg}`,'URL')}>Log</Btn></div></div>))}</Card>}</div>)};
+
+/* ═══════════════ HEADER ANALYZER ═══════════════ */
+const HdrAn=({addEntry,setReconIP})=>{const[raw,setRaw]=useState('');const[a,setA]=useState(null);const{t}=useT();const parse=()=>{const h=raw;const ips=[];(h.match(/^Received:[\s\S]*?(?=^\S)/gim)||[]).forEach(l=>{(l.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[]).forEach(ip=>{if(!ips.includes(ip))ips.push(ip)})});const g=p=>{const m=h.match(p);return m?m[1].trim():null};const from=g(/^From:.*?<([^>]+)>/im)||g(/^From:\s*(\S+@\S+)/im);const reply=g(/^Reply-To:.*?<([^>]+)>/im)||g(/^Reply-To:\s*(\S+@\S+)/im);const fd=from?from.split('@')[1]:null;const rd=reply?reply.split('@')[1]:null;setA({ips,spf:g(/spf=(\S+)/i),dkim:g(/dkim=(\S+)/i),dmarc:g(/dmarc=(\S+)/i),from,reply,sw:fd&&rd&&fd.toLowerCase()!==rd.toLowerCase(),subj:g(/^Subject:\s*(.*)/im)});t('Headers analyzed','success')};const ab=(l,v)=>{if(!v)return<span className="badge b-gr">{l}: N/A</span>;return<span className={`badge ${v.toLowerCase().startsWith('pass')?'b-g':'b-r'}`}>{l}: {v.toUpperCase()}</span>};return(<div className="au"><div style={{marginBottom:16}}><label className="lb">Raw Email Headers</label><textarea className="ta" rows={9} value={raw} onChange={e=>setRaw(e.target.value)} placeholder="Paste raw email headers here (Received:, From:, Reply-To:, DKIM-Signature:, etc.)"/></div><div style={{display:'flex',gap:6,marginBottom:16}}><Btn onClick={parse}>Analyze Headers</Btn>{a&&<Btn cls="bg2" onClick={()=>{addEntry(`HEADER ANALYSIS\nSubject: ${a.subj||'N/A'}\nFrom: ${a.from||'N/A'}\nReply-To: ${a.reply||'N/A'}\nSPF: ${a.spf||'N/A'} | DKIM: ${a.dkim||'N/A'} | DMARC: ${a.dmarc||'N/A'}\nSPOOF: ${a.sw?'YES':'NO'}\nIPs: ${a.ips.join(', ')}`,'HEADER');t('Logged','success')}}>+ Log</Btn>}</div>{a&&<div>{a.sw&&<div className="ad">SPOOFING DETECTED: From [{a.from?.split('@')[1]}] ≠ Reply-To [{a.reply?.split('@')[1]}]</div>}<div className="g2" style={{gap:14,marginBottom:14}}><Card title="Auth Results"><div style={{display:'flex',flexDirection:'column',gap:5}}>{ab('SPF',a.spf)}{ab('DKIM',a.dkim)}{ab('DMARC',a.dmarc)}</div></Card><Card title="Sender Info"><div style={{display:'flex',flexDirection:'column',gap:0}}><DF label="Subject" value={a.subj}/><DF label="From" value={a.from}/><DF label="Reply-To" value={a.reply} hl={a.sw?'var(--red)':undefined}/></div></Card></div><Card title={`Received Chain IPs — ${a.ips.length} found`}>{a.ips.length===0?<div style={{color:'var(--t3)',fontSize:12}}>No IPs extracted.</div>:<div style={{display:'flex',flexWrap:'wrap',gap:6}}>{a.ips.map((ip,i)=>(<div key={i} style={{display:'flex',gap:5,alignItems:'center'}}><span className="badge b-bl" style={{fontFamily:"var(--mono)"}}>{ip}</span><Btn cls="bgh bx" onClick={()=>setReconIP(ip)}>Recon</Btn></div>))}</div>}</Card></div>}</div>)};
+
+/* ═══════════════ IP RECON ═══════════════ */
+const IPRecon=({reconIP,setReconIP})=>{const[ip,setIp]=useState(reconIP||'');useEffect(()=>{if(reconIP)setIp(reconIP)},[reconIP]);const lines=ip?[`# -- WHOIS`,`whois ${ip}`,``, `# -- RDAP`,`curl -s https://rdap.arin.net/registry/ip/${ip} | python3 -m json.tool`,`curl -s https://rdap.db.ripe.net/ip/${ip} | python3 -m json.tool`,``, `# -- BGP / ROUTING`,`# https://bgpview.io/ip/${ip}`,`# https://bgp.he.net/ip/${ip}`,`# https://stat.ripe.net/widget/prefix-overview#w.resource=${ip}`,``, `# -- ABUSEIPDB`,`curl -s -G https://api.abuseipdb.com/api/v2/check \\`,`  --data-urlencode "ipAddress=${ip}" \\`,`  -d maxAgeInDays=90 \\`,`  -H "Key: YOUR_API_KEY" \\`,`  -H "Accept: application/json" | python3 -m json.tool`,``, `# -- SHODAN`,`shodan host ${ip}`,`shodan search --fields ip_str,port,org,hostnames "ip:${ip}"`,``, `# -- REVERSE DNS`,`dig -x ${ip} +short`,`host ${ip}`,``, `# -- GEOLOCATION`,`curl -s https://ipapi.co/${ip}/json/ | python3 -m json.tool`,`curl -s https://ip-api.com/json/${ip} | python3 -m json.tool`,]:['# Enter an IP address above to generate recon commands'];return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16,alignItems:'center'}}><input className="inp" style={{fontFamily:"var(--mono)",maxWidth:220}} value={ip} onChange={e=>setIp(e.target.value)} placeholder="e.g. 192.168.1.1"/><Btn onClick={()=>setReconIP(ip)}>Load</Btn><Cpy text={lines.join('\n')} label="Copy All"/></div><Code lines={lines} style={{minHeight:280}}/></div>)};
+
+/* ═══════════════ PTR/RDNS ═══════════════ */
+const PTR=()=>{const[t,setT]=useState('');const[ips,setIPs]=useState([]);const ex=()=>setIPs(extIPs(t));const lines=ips.length?ips.flatMap(ip=>[`# -- ${ip}`,`dig -x ${ip} +short`,`host ${ip}`,`nslookup ${ip}`,`nslookup ${ip} 8.8.8.8`,` `]):['# Paste text above and click Extract IPs'];return(<div className="au"><div style={{marginBottom:16}}><label className="lb">Input Text</label><textarea className="ta" rows={4} value={t} onChange={e=>setT(e.target.value)} placeholder="Paste any text containing IP addresses..."/></div><div style={{display:'flex',gap:6,marginBottom:16}}><Btn onClick={ex}>Extract IPs</Btn>{ips.length>0&&<Cpy text={lines.join('\n')}/>}</div>{ips.length>0&&<div style={{marginBottom:14,display:'flex',flexWrap:'wrap',gap:5,alignItems:'center'}}><span style={{fontSize:11,fontWeight:600,color:'var(--t2)'}}>Found {ips.length} IP{ips.length===1?'':'s'}:</span>{ips.map((ip,i)=><span key={i} className="badge b-bl" style={{fontFamily:"var(--mono)"}}>{ip}</span>)}</div>}<Code lines={lines} style={{minHeight:180}}/></div>)};
+
+/* ═══════════════ SUBNET CALC ═══════════════ */
+const SubCalc=()=>{const[c,setC]=useState('');const[r,setR]=useState(null);const[err,setErr]=useState('');const calc=()=>{const s=calcSub(c.trim());if(!s){setErr('Invalid CIDR. Example: 192.168.1.0/24');setR(null)}else{setR(s);setErr('')}};return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16,alignItems:'flex-end'}}><div><label className="lb">CIDR Notation</label><input className="inp" style={{maxWidth:200}} value={c} onChange={e=>setC(e.target.value)} placeholder="e.g. 10.0.0.0/8" onKeyDown={e=>e.key==='Enter'&&calc()}/></div><Btn onClick={calc}>Calculate</Btn>{r&&<Cpy text={[`Network:   ${r.net}/${r.p}`,`Netmask:   ${r.msk}`,`Broadcast: ${r.bcast}`,`First IP:  ${r.first}`,`Last IP:   ${r.last}`,`Usable:    ${r.use.toLocaleString()} hosts`,].join('\n')}/>}</div>{err&&<div className="ad">{err}</div>}{r&&<div className="g2" style={{gap:14}}><Card><DF label="Network Address" value={r.net} mono/><DF label="Subnet Mask" value={r.msk} mono/><DF label="Broadcast" value={r.bcast} mono/><DF label="First Host" value={r.first} mono/><DF label="Last Host" value={r.last} mono/><DF label="Usable Hosts" value={r.use.toLocaleString()}/><DF label="Prefix" value={`/${r.p}`}/><DF label="Total Addresses" value={Math.pow(2,32-r.p).toLocaleString()}/></Card><Code lines={[`Network:   ${r.net}/${r.p}`,`Netmask:   ${r.msk}`,`Broadcast: ${r.bcast}`,`First IP:  ${r.first}`,`Last IP:   ${r.last}`,`Usable:    ${r.use.toLocaleString()} hosts`,]}/></div>}</div>)};
+
+/* ═══════════════ NET CONFIG GEN ═══════════════ */
+const NetCfg=()=>{const[iface,setIface]=useState('eth0');const[cidr,setCidr]=useState('');const[os,setOs]=useState('ubuntu');const[r,setR]=useState(null);const[err,setErr]=useState('');const{t}=useT();const i2n=ip=>ip.split('.').reduce((a,b)=>(a<<8)|parseInt(b),0)>>>0;const n2i=n=>[(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255].join('.');const parse=()=>{const m=cidr.trim().match(/^(\d+\.\d+\.\d+\.\d+)\/(\d+)$/);if(!m){setErr('Invalid. Example: 50.7.60.12/29');setR(null);return}const ip=m[1],p=parseInt(m[2]);if(p<0||p>32){setErr('Prefix 0-32');setR(null);return}const n=i2n(ip),msk=p===0?0:(0xFFFFFFFF<<(32-p))>>>0,nw=(n&msk)>>>0,bc=(nw|(~msk>>>0))>>>0,gw=n-1,use=[];for(let i=n;i<bc;i++)use.push(n2i(i));setErr('');setR({ip,p,msk:n2i(msk),gw:n2i(gw),bc:n2i(bc),use,net:n2i(nw)})};const gen=()=>{if(!r)return[];const{ip,p,msk,gw}=r;const D='1.1.1.1',D2='8.8.8.8';if(os==='debian')return[`# /etc/network/interfaces`,``, `auto lo`,`iface lo inet loopback`,``, `auto ${iface}`,`iface ${iface} inet static`,`    address ${ip}/${p}`,`    netmask ${msk}`,`    gateway ${gw}`,`    dns-nameservers ${D} ${D2}`,``, `# Apply`,`ifdown ${iface} && ifup ${iface}`,];if(os==='ubuntu')return[`# /etc/netplan/00-${iface}.yaml`,``, `network:`,`  version: 2`,`  ethernets:`,`    ${iface}:`,`      dhcp4: false`,`      addresses:`,`        - ${ip}/${p}`,`      routes:`,`        - to: default`,`          via: ${gw}`,`      nameservers:`,`        addresses: [${D}, ${D2}]`,``, `# Apply`,`netplan apply`,];if(os==='rhel-nmcli')return[`# RHEL -- nmcli`,``, `nmcli con add type ethernet ifname ${iface} con-name ${iface}`,`nmcli con mod ${iface} ipv4.method manual \\`,`    ipv4.addresses ${ip}/${p} \\`,`    ipv4.gateway ${gw} \\`,`    ipv4.dns "${D} ${D2}"`,`nmcli con up ${iface}`,];if(os==='rhel-file')return[`# /etc/sysconfig/network-scripts/ifcfg-${iface}`,``, `TYPE=Ethernet`,`BOOTPROTO=none`,`NAME=${iface}`,`DEVICE=${iface}`,`ONBOOT=yes`,`IPADDR=${ip}`,`PREFIX=${p}`,`GATEWAY=${gw}`,`DNS1=${D}`,`DNS2=${D2}`,``, `# Apply`,`nmcli con reload && nmcli con up ${iface}`,];if(os==='systemd')return[`# /etc/systemd/network/10-${iface}.network`,``, `[Match]`,`Name=${iface}`,``, `[Network]`,`Address=${ip}/${p}`,`Gateway=${gw}`,`DNS=${D}`,`DNS=${D2}`,``, `# Apply`,`systemctl restart systemd-networkd`,];return[]};const lines=gen();const doCp=()=>{cp(lines.join('\n'));t('Config copied','success')};const opts=[{id:'ubuntu',l:'Ubuntu'},{id:'debian',l:'Debian'},{id:'rhel-nmcli',l:'RHEL (nmcli)'},{id:'rhel-file',l:'RHEL (ifcfg)'},{id:'systemd',l:'systemd-networkd'}];return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap',alignItems:'flex-end'}}><div><label className="lb">Interface</label><input className="inp" style={{width:100}} value={iface} onChange={e=>setIface(e.target.value)} onKeyDown={e=>e.key==='Enter'&&parse()}/></div><div><label className="lb">IP / CIDR</label><input className="inp" style={{width:170}} value={cidr} onChange={e=>setCidr(e.target.value)} placeholder="50.7.60.12/29" onKeyDown={e=>e.key==='Enter'&&parse()}/></div><Btn onClick={parse}>Generate</Btn>{lines.length>0&&<Btn cls="bs" onClick={doCp}>Copy</Btn>}</div><div style={{display:'flex',gap:3,marginBottom:16,flexWrap:'wrap'}}>{opts.map(o=>(<Btn key={o.id} cls={os===o.id?'':'bs'} onClick={()=>setOs(o.id)}>{o.l}</Btn>))}</div>{err&&<div className="ad">{err}</div>}{r&&<div className="g2" style={{gap:14}}><Card title="Network Info"><DF label="Assigned IP" value={`${r.ip}/${r.p}`} mono/><DF label="Netmask" value={r.msk} mono/><DF label="Gateway" value={r.gw} mono/><DF label="Broadcast" value={r.bc} mono/><DF label="DNS" value="1.1.1.1, 8.8.8.8"/><DF label="Usable IPs" value={r.use.join(', ')} mono/></Card><Code lines={lines} style={{minHeight:200}}/></div>}</div>)};
+
+/* ═══════════════ PORT SCAN GEN ═══════════════ */
+const PortScan=()=>{const[ip,setIp]=useState('');const[tgt,setTgt]=useState('');const gen=()=>setTgt(ip.trim());const lines=tgt?[`# TARGET: ${tgt}`,``, `# QUICK SCAN (Top 1000)`,`nmap -T4 -F ${tgt}`,``, `# FULL TCP SCAN`,`nmap -sS -T4 -p- ${tgt}`,`nmap -sT -T4 -p- ${tgt}`,``, `# UDP SCAN`,`nmap -sU -T4 --top-ports 200 ${tgt}`,`nmap -sU -p 53,67,68,69,123,161,500,514 ${tgt}`,``, `# SERVICE & VERSION`,`nmap -sV -sC -T4 -p- ${tgt}`,`nmap -sV --version-intensity 9 -T4 ${tgt}`,``, `# OS DETECTION`,`nmap -O -T4 ${tgt}`,`nmap -A -T4 ${tgt}`,``, `# VULNERABILITY`,`nmap --script vuln -T4 -p- ${tgt}`,`nmap --script=http-vuln*,ssl*,smb-vuln* -T4 ${tgt}`,``, `# SPECIFIC PORTS`,`nmap -sV -p 22,80,443,8080,8443,3306,5432,27017 ${tgt}`,`nmap -sV -p 21,22,23,25,53,110,143,445,3389 ${tgt}`,``, `# STEALTH`,`nmap -sS -T2 --randomize-hosts -D RND:10 -p- ${tgt}`,`nmap -sF -T2 ${tgt}`,`nmap -sN -T2 ${tgt}`,]:['# Enter an IP or hostname to generate nmap commands'];return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16}}><input className="inp" style={{maxWidth:240}} value={ip} onChange={e=>setIp(e.target.value)} placeholder="e.g. 192.168.1.1 or example.com" onKeyDown={e=>e.key==='Enter'&&gen()}/><Btn onClick={gen}>Generate</Btn>{tgt&&<Cpy text={lines.join('\n')}/>}</div><Code lines={lines} style={{minHeight:340}}/></div>)};
+
+/* ═══════════════ ACL BUILDER ═══════════════ */
+const ACL=()=>{const[inp,setInp]=useState('');const[fmt,setFmt]=useState('iptables');const items=inp.split('\n').map(s=>s.trim()).filter(Boolean);const gIP=()=>{if(!items.length)return['# Enter IPs/CIDRs above'];return[`# BLOCK RULES`,...items.map(ip=>`iptables -I INPUT -s ${ip} -j DROP`),`iptables -I FORWARD -s ${items[0]||'<IP>'} -j DROP`,``, `# SAVE`,`iptables-save > /etc/iptables/rules.v4`,``, `# REMOVE`,...items.map(ip=>`iptables -D INPUT -s ${ip} -j DROP`),``, `# VERIFY`,`iptables -L INPUT -n --line-numbers | grep DROP`,]};const gNF=()=>{if(!items.length)return['# Enter IPs/CIDRs above'];return[`# CREATE SET`,`nft add table inet abuse_block`,`nft add chain inet abuse_block input '{ type filter hook input priority 0; policy accept; }'`,`nft add set inet abuse_block blocklist '{ type ipv4_addr; flags interval; }'`,``, `# ADD IPs`,...items.map(ip=>`nft add element inet abuse_block blocklist { ${ip} }`),``, `# APPLY`,`nft add rule inet abuse_block input ip saddr @blocklist drop`,``, `# VERIFY`,`nft list set inet abuse_block blocklist`,]};const gUFW=()=>{if(!items.length)return['# Enter IPs/CIDRs above'];return[`# BLOCK`,...items.map(ip=>`ufw deny from ${ip} to any`),``, `# VERIFY`,`ufw status numbered`,``, `# REMOVE`,...items.map((_,i)=>`ufw delete <rule_for_${items[i]}>`),``, `# RELOAD`,`ufw reload`,]};const lines=fmt==='iptables'?gIP():fmt==='nftables'?gNF():gUFW();return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16,alignItems:'center',flexWrap:'wrap'}}><span style={{fontWeight:600,fontSize:11,color:'var(--t2)'}}>Format:</span>{['iptables','nftables','ufw'].map(f=>(<Btn key={f} cls={fmt===f?'':'bs'} onClick={()=>setFmt(f)}>{f}</Btn>))}<Cpy text={lines.join('\n')}/></div><div className="g2" style={{gap:14}}><div><label className="lb">IPs / CIDRs (one per line)</label><textarea className="ta" rows={12} value={inp} onChange={e=>setInp(e.target.value)} placeholder={"192.168.1.1\n10.0.0.0/8\n2001:db8::1"}/><div style={{marginTop:3,fontSize:10,color:'var(--t3)'}}>{items.length} entr{items.length===1?'y':'ies'}</div></div><Code lines={lines} style={{minHeight:200,height:'100%'}}/></div></div>)};
+
+/* ═══════════════ RESPONSE GEN ═══════════════ */
+const RespGen=({addEntry})=>{const[tpls,setTpls]=useState(()=>{try{return JSON.parse(localStorage.getItem('abuse_templates')||JSON.stringify(TPL))}catch{return TPL}});const[sel,setSel]=useState('phishing');const[ed,setEd]=useState('');const[edit,setEdit]=useState(false);const[resp,setResp]=useState('');const[age,setAge]=useState('');const{t}=useT();const ESC={'24h':`Hello,\n\nThis is a follow-up to our previous abuse notice. As of the time of this message, we have not received a response or confirmation of remediation.\n\nWe ask that you respond within 24 hours with an update on the steps taken to resolve this matter. Failure to do so may result in suspension of the affected service.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`,'48h':`Hello,\n\nAs 48 hours have elapsed since our initial abuse notice without a satisfactory response or resolution, the affected service has been suspended pending investigation.\n\nTo have your service reinstated, please contact us at abuse@fdcservers.net with confirmation of the corrective actions taken.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`,'72h':`Hello,\n\nAs 72 hours have passed since our initial abuse notice without adequate response or resolution, and following the suspension of your service, we have proceeded with permanent termination of the affected service in accordance with our Acceptable Use Policy.\n\nIf you wish to dispute this decision, please contact abuse@fdcservers.net within 7 days of this notice.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`,resolved:`Hello,\n\nThank you for your prompt attention to this matter. We have verified that the reported content has been removed and the issue has been resolved to our satisfaction.\n\nThis ticket is now closed. Please do not hesitate to contact us should you have any further questions.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`};const useT=()=>{setResp(tpls[sel]||'');t('Template loaded','info')};const useE=()=>{if(age){setResp(ESC[age]||'');t(`Escalation (${age}) loaded`,'info')}};const save=()=>{setTpls({...tpls,[sel]:ed});localStorage.setItem('abuse_templates',JSON.stringify({...tpls,[sel]:ed}));setEdit(false);t('Template saved','success')};return(<div className="au"><div className="g2" style={{gap:14,marginBottom:14}}><Card title="Templates"><div style={{marginBottom:10}}><select className="sel" style={{width:'100%',marginBottom:6}} value={sel} onChange={e=>{setSel(e.target.value);setEdit(false)}}>{Object.keys(tpls).map(k=>(<option key={k} value={k}>{k.toUpperCase()}</option>))}</select><div style={{display:'flex',gap:5,flexWrap:'wrap'}}><Btn onClick={useT}>Use</Btn><Btn cls="bs" onClick={()=>{setEd(tpls[sel]||'');setEdit(!edit)}}>{edit?'Cancel':'Edit'}</Btn>{edit&&<Btn cls="bg2" onClick={save}>Save</Btn>}</div></div>{edit?<textarea className="ta" rows={8} value={ed} onChange={e=>setEd(e.target.value)}/>:<div className="code" style={{fontSize:11,minHeight:70,whiteSpace:'pre-wrap'}}>{tpls[sel]||''}</div>}</Card><Card title="Escalation Shortcuts"><div style={{marginBottom:10}}><select className="sel" style={{width:'100%',marginBottom:6}} value={age} onChange={e=>setAge(e.target.value)}><option value="">-- Select --</option><option value="24h">24h - Follow-up</option><option value="48h">48h - Suspension</option><option value="72h">72h - Termination</option><option value="resolved">Resolved - Close</option></select><Btn onClick={useE} disabled={!age}>Load</Btn></div><div style={{fontSize:11,color:'var(--t2)',lineHeight:2,marginTop:6}}><div>24h - Reminder</div><div>48h - Suspension</div><div>72h - Termination</div><div>Resolved - Close ticket</div></div></Card></div><Card title="Response Editor"><textarea className="ta" rows={12} value={resp} onChange={e=>setResp(e.target.value)} placeholder="Select a template or type your response..."/><div style={{display:'flex',gap:6,marginTop:12,flexWrap:'wrap'}}><Btn cls={resp?'':'bs'} onClick={async()=>{await cp(resp);t('Copied','success')}} disabled={!resp}>Copy</Btn><Btn cls="bg2" onClick={()=>{addEntry(resp,'RESPONSE');t('Added to log','success')}} disabled={!resp}>+ Log</Btn><Btn cls="bgh" onClick={()=>setResp('')}>Clear</Btn></div></Card></div>)};
+
+/* ═══════════════ WHOIS ═══════════════ */
+const Whois=()=>{const[q,setQ]=useState('');const[r,setR]=useState(null);const[ld,setLd]=useState(false);const[err,setErr]=useState('');const{t}=useT();const lookup=async()=>{const s=q.trim();if(!s)return;setLd(true);setR(null);setErr('');try{const isIP=/^\d{1,3}(\.\d{1,3}){3}$/.test(s);let u=isIP?`https://rdap.arin.net/registry/ip/${s}`:`https://rdap.verisign.com/com/v1/domain/${s}`;let res=await fetch(u);if(!res.ok&&!isIP)res=await fetch(`https://rdap.org/domain/${s}`);if(!res.ok)throw new Error(`HTTP ${res.status}`);setR({raw:await res.json(),isIP,q:s});t('Lookup complete','success')}catch(e){setErr(`Failed: ${e.message}`)}setLd(false)};const rIP=d=>{const o=d.entities?.find(e=>e.roles?.includes('registrant'));const oN=o?.vcardArray?.[1]?.find(v=>v[0]==='fn')?.[3]||o?.handle||'N/A';const ab=d.entities?.flatMap(e=>e.entities||[]).find(e=>e.roles?.includes('abuse'));const aE=ab?.vcardArray?.[1]?.find(v=>v[0]==='email')?.[3]||'N/A';const cidr=d.cidr0_cidrs?.[0]?`${d.cidr0_cidrs[0].v4prefix}/${d.cidr0_cidrs[0].length}`:'N/A';return[['Handle',d.handle||'N/A'],['Name',d.name||'N/A'],['Organization',oN],['Country',d.country||'N/A'],['CIDR',cidr],['Start IP',d.startAddress||'N/A'],['End IP',d.endAddress||'N/A'],['Abuse',aE],]};const rDom=d=>{const reg=d.entities?.find(e=>e.roles?.includes('registrant'));const rgr=d.entities?.find(e=>e.roles?.includes('registrar'));const g=(e,f)=>e?.vcardArray?.[1]?.find(v=>v[0]===f)?.[3]||'N/A';const ev={};(d.events||[]).forEach(e=>{ev[e.eventAction]=e.eventDate?.slice(0,10)||'N/A'});return[['Domain',d.ldhName||d.unicodeName||'N/A'],['Status',(d.status||[]).join(', ')||'N/A'],['Registrar',g(rgr,'fn')],['Registrant',g(reg,'fn')],['Email',g(reg,'email')],['Registered',ev['registration']||'N/A'],['Updated',ev['last changed']||'N/A'],['Expires',ev['expiration']||'N/A'],['Nameservers',(d.nameservers||[]).map(n=>n.ldhName).join(', ')||'N/A'],]};const rows=r?(r.isIP?rIP(r.raw):rDom(r.raw)):[];return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16}}><input className="inp" style={{maxWidth:300}} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&lookup()} placeholder="e.g. 1.2.3.4 or example.com"/><Btn onClick={lookup} disabled={ld}>{ld?<><Spin/> Looking up...</>:'Whois Lookup'}</Btn>{r&&<Cpy text={rows.map(([k,v])=>`${k}: ${v}`).join('\n')}/>}</div>{err&&<div className="ad">{err}</div>}{r&&<div className="g2" style={{gap:14}}><Card title={`${r.isIP?'IP':'Domain'} RDAP - ${r.q}`}>{rows.map(([l,v],i)=>(<DF key={i} label={l} value={v} mono hl={i===0?'var(--accent2)':undefined}/>))}</Card><Card title="CLI Equivalent"><Code lines={[`whois ${q.trim()}`,``, `# RDAP:`,`curl -s https://rdap.org/${r.isIP?'ip':'domain'}/${r.q} | python3 -m json.tool`,]}/></Card></div>}</div>)};
+
+/* ═══════════════ ABUSE CONTACT ═══════════════ */
+const AbuseCon=()=>{const[q,setQ]=useState('');const[r,setR]=useState(null);const[ld,setLd]=useState(false);const[err,setErr]=useState('');const{t}=useT();const lookup=async()=>{const s=q.trim();if(!s)return;setLd(true);setR(null);setErr('');try{const isIP=/^\d{1,3}(\.\d{1,3}){3}$/.test(s);const res=await fetch(isIP?`https://rdap.arin.net/registry/ip/${s}`:`https://rdap.org/domain/${s}`);if(!res.ok)throw new Error(`HTTP ${res.status}`);const d=await res.json();const ae=[];const w=e=>{(e||[]).forEach(x=>{ae.push(x);w(x.entities)})};w(d.entities);const ab=ae.find(e=>e.roles?.includes('abuse'));const g=(e,f)=>e?.vcardArray?.[1]?.find(v=>v[0]===f)?.[3];const org=ae.find(e=>e.roles?.includes('registrant'));setR({em:g(ab,'email')||'Not found',ph:g(ab,'tel')||'Not found',nm:g(ab,'fn')||ab?.handle||'Not found',org:g(org,'fn')||org?.handle||'N/A',h:d.handle||'N/A',net:d.name||'N/A',isIP,q:s});t('Lookup complete','success')}catch(e){setErr(`Failed: ${e.message}`)}setLd(false)};const found=r&&r.em!=='Not found';return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16}}><input className="inp" style={{maxWidth:300}} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&lookup()} placeholder="e.g. 1.2.3.4 or domain.com"/><Btn onClick={lookup} disabled={ld}>{ld?<><Spin/> Looking up...</>:'Find Contact'}</Btn></div>{err&&<div className="ad">{err}</div>}{r&&<div className="g2" style={{gap:14}}><Card title={`Abuse Contact - ${r.q}`}><div style={{marginBottom:12}}><span className={`badge ${found?'b-g':'b-r'}`}>{found?'Contact Found':'No Contact'}</span></div>{[['Organization',r.org],['Network',r.net],['Handle',r.h],['Contact Name',r.nm],['Email',r.em],['Phone',r.ph],].map(([l,v],i)=>(<DF key={i} label={l} value={v} mono={l.includes('Email')||l.includes('Phone')||l==='Handle'} hl={l==='Email'&&found?'var(--accent2)':undefined}/>))}{found&&<div style={{marginTop:12,display:'flex',gap:6}}><Cpy text={r.em} label="Copy Email"/><Cpy text={`To: ${r.em}\nSubject: Abuse Report - ${r.q}\n\nHello,\n\nWe are reporting abuse originating from ${r.q}.\n\n--\nFDCServers Abuse Department\nabuse@fdcservers.net`} label="Copy Draft"/></div>}</Card><Card title="CLI Lookup"><Code lines={[`# RDAP:`,`curl -s https://rdap.arin.net/registry/ip/${r.q} \\`,`  | python3 -m json.tool | grep -i abuse`,``, `# WHOIS:`,`whois ${r.q} | grep -i abuse`,]}/></Card></div>}</div>)};
+
+/* ═══════════════ DEFANG/REFANG ═══════════════ */
+const Defang=()=>{const[inp,setInp]=useState('');const[mode,setMode]=useState('defang');const proc=text=>{if(!text.trim())return'';return text.split('\n').map(l=>mode==='defang'?l.replace(/https:\/\//gi,'hxxps://').replace(/http:\/\//gi,'hxxp://').replace(/\./g,'[.]').replace(/:/g,'[:]'):l.replace(/hxxps:\/\//gi,'https://').replace(/hxxp:\/\//gi,'http://').replace(/\[\.\]|\(\.\)/g,'.').replace(/\[:\]/g,':')).join('\n')};const out=proc(inp);return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16,alignItems:'center'}}><span style={{fontWeight:600,fontSize:11,color:'var(--t2)'}}>Mode:</span><Btn cls={mode==='defang'?'':'bs'} onClick={()=>setMode('defang')}>Defang</Btn><Btn cls={mode==='refang'?'':'bs'} onClick={()=>setMode('refang')}>Refang</Btn></div><div className="g2" style={{gap:14}}><div><label className="lb">{mode==='defang'?'Raw Input':'Defanged Input'}</label><textarea className="ta" rows={14} value={inp} onChange={e=>setInp(e.target.value)} placeholder={mode==='defang'?'https://evil.com/phish\n192.168.1.1':'hxxps://evil[.]com/phish'}/></div><div><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}><label className="lb" style={{marginBottom:0}}>{mode==='defang'?'Defanged Output':'Refanged Output'}</label><Cpy text={out}/></div><div className="code" style={{minHeight:230,whiteSpace:'pre-wrap',wordBreak:'break-all',color:out?'#7dd3fc':'var(--t3)'}}>{out||'# Output will appear here'}</div></div></div></div>)};
+
+/* ═══════════════ DECODE/ENCODE ═══════════════ */
+const Decode=()=>{const[inp,setInp]=useState('');const[mode,setMode]=useState('b64decode');const{t}=useT();const MODES=[{id:'b64decode',l:'Base64 Decode'},{id:'b64encode',l:'Base64 Encode'},{id:'urldecode',l:'URL Decode'},{id:'urlencode',l:'URL Encode'},{id:'hexdecode',l:'Hex Decode'},{id:'htmldecode',l:'HTML Decode'}];const proc=()=>{const s=inp.trim();if(!s)return'';try{switch(mode){case'b64decode':{const b=atob(s);try{return decodeURIComponent(escape(b))}catch{return b}}case'b64encode':return btoa(unescape(encodeURIComponent(s)));case'urldecode':return decodeURIComponent(s.replace(/\+/g,' '));case'urlencode':return encodeURIComponent(s);case'hexdecode':{const h=s.replace(/\s+/g,'').replace(/^0x/i,'');if(!/^[0-9a-fA-F]+$/.test(h))return'Invalid hex';let o='';for(let i=0;i<h.length;i+=2)o+=String.fromCharCode(parseInt(h.substr(i,2),16));return o}case'htmldecode':{const e=document.createElement('textarea');e.innerHTML=s;return e.value}default:return s}}catch(e){return`Error: ${e.message}`}};const out=proc();const err=out.startsWith('Error');return(<div className="au"><div style={{display:'flex',gap:3,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}><span style={{fontWeight:600,fontSize:11,color:'var(--t2)',marginRight:3}}>Mode:</span>{MODES.map(m=>(<Btn key={m.id} cls={mode===m.id?'':'bs'} onClick={()=>{setMode(m.id);t(m.l,'info')}} style={{fontSize:11,padding:'4px 10px'}}>{m.l}</Btn>))}</div><div className="g2" style={{gap:14}}><div><label className="lb">Input</label><textarea className="ta" rows={14} value={inp} onChange={e=>setInp(e.target.value)} placeholder={mode==='b64decode'?'Paste Base64...':mode==='urldecode'?'Paste URL-encoded...':'Paste text...'}/></div><div><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}><label className="lb" style={{marginBottom:0}}>Output</label>{!err&&out&&<Cpy text={out}/>}</div><div className="code" style={{minHeight:230,whiteSpace:'pre-wrap',wordBreak:'break-all',color:err?'#f87171':'#7dd3fc'}}>{out||'# Output will appear here'}</div></div></div></div>)};
+
+/* ═══════════════ HASH CHECKER ═══════════════ */
+const HashChk=()=>{const[inp,setInp]=useState('');const[res,setRes]=useState([]);const[ho,setHO]=useState({});const{t}=useT();const PAT={MD5:/\b[a-fA-F0-9]{32}\b/g,SHA1:/\b[a-fA-F0-9]{40}\b/g,SHA256:/\b[a-fA-F0-9]{64}\b/g,SHA512:/\b[a-fA-F0-9]{128}\b/g};const ext=text=>{const f=[],seen=new Set();Object.entries(PAT).forEach(([tp,re])=>{const m=[...new Set(text.match(re)||[])];m.forEach(h=>{if(!seen.has(h)){seen.add(h);f.push({hash:h,type:tp})}})});return f};const chk=async()=>{const h=ext(inp);if(!h.length)return t('No hashes found','error');const c=[];for(const x of h){c.push({...x,vt:`https://www.virustotal.com/gui/file/${x.hash}`,otx:`https://otx.alienvault.com/indicator/file/${x.hash}`,mb:`https://www.malwarebazaar.org/browse.php?search[tag]=${x.hash}`});setRes([...c])}t(`Found ${h.length} hash(es)`,'success')};const comp=async()=>{const enc=new TextEncoder().encode(inp);const o={};for(const[a,k]of[['SHA-1','sha1'],['SHA-256','sha256'],['SHA-512','sha512']]){const buf=await crypto.subtle.digest(a,enc);o[k]=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')}setHO(o);setRes([]);t('Hashes computed','success')};return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}><Btn onClick={chk}>Extract & Check Hashes</Btn><Btn cls="bgh" onClick={comp} style={{color:'var(--purple)',border:'1px solid rgba(168,85,247,.3)'}}>Compute Input Hashes</Btn></div><div className="g2" style={{gap:14,marginBottom:14}}><div><label className="lb">Input</label><textarea className="ta" rows={8} value={inp} onChange={e=>setInp(e.target.value)} placeholder="Paste hashes or text to compute..."/></div>{Object.keys(ho).length>0&&<Card title="Computed Hashes">{[['SHA-1','sha1'],['SHA-256','sha256'],['SHA-512','sha512']].map(([l,k])=>(<div key={k} style={{marginBottom:10}}><div style={{fontWeight:600,fontSize:10,color:'var(--t3)',marginBottom:2}}>{l}</div><div style={{fontFamily:"var(--mono)",fontSize:11,wordBreak:'break-all',background:'var(--bg3)',padding:'6px 8px',borderRadius:6,border:'1px solid var(--border)'}}>{ho[k]}</div><div style={{marginTop:4}}><Cpy text={ho[k]} label={`Copy ${l}`}/></div></div>))}</Card>}</div>{res.length>0&&<Card title={`${res.length} hash(es) found`}>{res.map((r,i)=>(<div key={i} className="rr" style={{marginBottom:0}}><div style={{display:'flex',gap:6,alignItems:'center',marginBottom:6,flexWrap:'wrap'}}><span className="badge b-p">{r.type}</span><span style={{fontFamily:"var(--mono)",fontSize:11,wordBreak:'break-all',color:'var(--accent2)'}}>{r.hash}</span></div><div style={{display:'flex',gap:10,flexWrap:'wrap',fontSize:12}}><a href={r.vt} target="_blank" rel="noopener">VirusTotal</a><a href={r.otx} target="_blank" rel="noopener">AlienVault OTX</a><a href={r.mb} target="_blank" rel="noopener">MalwareBazaar</a><Cpy text={r.hash} label="Copy"/></div></div>))}</Card>}</div>)};
+
+/* ═══════════════ EMAIL HEADER PARSER ═══════════════ */
+const EmailHP=({addEntry,setReconIP})=>{const[raw,setRaw]=useState('');const[p,setP]=useState(null);const{t}=useT();const parse=()=>{const h=raw;const g=re=>{const m=h.match(re);return m?m[1].trim():null};const blocks=[];const rcv=/^(Received:[\s\S]*?)(?=^\S)/gim;let m;while((m=rcv.exec(h))!==null){const b=m[1];blocks.push({ips:[...new Set(b.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[])],by:b.match(/by\s+(\S+)/i)?.[1]||null,from:b.match(/from\s+(\S+)/i)?.[1]||null,date:b.match(/;\s*(.+)$/m)?.[1]?.trim()||null})}const fd=g(/^From:.*?<([^>]+)>/im)||g(/^From:\s*(\S+@\S+)/im);const rd=g(/^Reply-To:.*?<([^>]+)>/im)||g(/^Reply-To:\s*(\S+@\S+)/im);const fdd=fd?.split('@')[1],rdd=rd?.split('@')[1];const rp=g(/^Return-Path:.*?<([^>]+)>/im)||g(/^Return-Path:\s*(\S+@\S+)/im);const rpd=rp?.split('@')[1];const aip=[...new Set(blocks.flatMap(b=>b.ips))];const xoip=g(/^X-Originating-IP:\s*([\d.]+)/im);if(xoip&&!aip.includes(xoip))aip.unshift(xoip);setP({blocks,spf:g(/spf=(\S+)/i),dkim:g(/dkim=(\S+)/i),dmarc:g(/dmarc=(\S+)/i),from:fd,to:g(/^To:.*?<([^>]+)>/im)||g(/^To:\s*(\S+@\S+)/im),reply:rd,subj:g(/^Subject:\s*(.*)/im),msgid:g(/^Message-ID:\s*<?([^>\s]+)/im),xmail:g(/^X-Mailer:\s*(.*)/im),xoip,sw:fdd&&rdd&&fdd.toLowerCase()!==rdd.toLowerCase(),rm:fdd&&rpd&&fdd.toLowerCase()!==rpd.toLowerCase(),rp,fdd,rdd,aip});t('Headers parsed','success')};const ab=(l,v)=>{if(!v)return<span className="badge b-gr">{l}: N/A</span>;return<span className={`badge ${v.toLowerCase().startsWith('pass')?'b-g':'b-r'}`}>{l}: {v.toUpperCase()}</span>};return(<div className="au"><div style={{marginBottom:16}}><label className="lb">Raw Email Headers</label><textarea className="ta" rows={8} value={raw} onChange={e=>setRaw(e.target.value)} placeholder="Paste full raw email headers..."/></div><div style={{display:'flex',gap:6,marginBottom:16}}><Btn onClick={parse}>Parse Headers</Btn>{p&&<Btn cls="bg2" onClick={()=>{addEntry(`EMAIL HEADER\nSubject: ${p.subj||'N/A'}\nFrom: ${p.from||'N/A'}\nTo: ${p.to||'N/A'}\nReply-To: ${p.reply||'N/A'}\nReturn-Path: ${p.rp||'N/A'}\nSPF: ${p.spf||'N/A'} | DKIM: ${p.dkim||'N/A'} | DMARC: ${p.dmarc||'N/A'}\nSpoof: ${p.sw?'YES':'NO'}\nIPs: ${p.aip.join(', ')||'none'}`,'HEADER');t('Logged','success')}}>+ Log</Btn>}</div>{p&&<div>{(p.sw||p.rm)&&<div className="ad">{p.sw&&<div>SPOOF: From [{p.fdd}] ≠ Reply-To [{p.rdd}]</div>}{p.rm&&<div>RETURN-PATH MISMATCH: From [{p.fdd}] ≠ Return-Path [{p.rp?.split('@')[1]}]</div>}</div>}<div className="g2" style={{gap:14,marginBottom:14}}><Card title="Auth Results"><div style={{display:'flex',flexDirection:'column',gap:5}}>{ab('SPF',p.spf)}{ab('DKIM',p.dkim)}{ab('DMARC',p.dmarc)}</div></Card><Card title="Sender Info"><div style={{display:'flex',flexDirection:'column',gap:0}}><DF label="Subject" value={p.subj}/><DF label="From" value={p.from}/><DF label="To" value={p.to}/><DF label="Reply-To" value={p.reply} hl={p.sw?'var(--red)':undefined}/><DF label="Return-Path" value={p.rp} hl={p.rm?'var(--red)':undefined}/><DF label="X-Orig-IP" value={p.xoip} mono/><DF label="X-Mailer" value={p.xmail}/><DF label="Message-ID" value={p.msgid} mono/></div></Card></div><Card title={`Received Chain — ${p.blocks.length} hop(s) | ${p.aip.length} IP(s)`}>{p.aip.length>0&&<div style={{marginBottom:12,display:'flex',flexWrap:'wrap',gap:5,alignItems:'center'}}><span style={{fontWeight:600,fontSize:11}}>IPs:</span>{p.aip.map((ip,i)=>(<div key={i} style={{display:'flex',gap:3,alignItems:'center'}}><span className="badge b-bl" style={{fontFamily:"var(--mono)"}}>{ip}</span><Btn cls="bgh bx" onClick={()=>setReconIP(ip)}>Recon</Btn></div>))}</div>}{p.blocks.map((b,i)=>(<div key={i} style={{marginBottom:6,border:'1px solid var(--border)',padding:10,borderRadius:8,background:i%2?'var(--bg3)':'var(--card)',fontFamily:"var(--mono)",fontSize:11}}><div style={{fontWeight:700,color:'var(--accent2)',marginBottom:3,fontFamily:'var(--font)',fontSize:12}}>Hop {i+1}</div>{b.from&&<div><span style={{color:'var(--t3)'}}>From: </span>{b.from}</div>}{b.by&&<div><span style={{color:'var(--t3)'}}>By:   </span>{b.by}</div>}{b.date&&<div><span style={{color:'var(--t3)'}}>Date: </span>{b.date}</div>}{b.ips.length>0&&<div><span style={{color:'var(--t3)'}}>IPs:  </span>{b.ips.join(', ')}</div>}</div>))}</Card></div>}</div>)};
+
+/* ═══════════════ ASN EXPLORER ═══════════════ */
+const ASN=()=>{const[q,setQ]=useState('');const[r,setR]=useState(null);const[ld,setLd]=useState(false);const[err,setErr]=useState('');const{t}=useT();const lookup=async()=>{const s=q.trim().toUpperCase().replace(/^AS/i,'');if(!s)return;setLd(true);setR(null);setErr('');try{const res=await fetch(`https://rdap.arin.net/registry/autnum/${s}`);if(!res.ok)throw new Error(`HTTP ${res.status}`);const d=await res.json();const o=d.entities?.find(e=>e.roles?.includes('registrant'));const g=(e,f)=>e?.vcardArray?.[1]?.find(v=>v[0]===f)?.[3];const ab=d.entities?.flatMap(e=>e.entities||[]).find(e=>e.roles?.includes('abuse'));setR({asn:d.handle||`AS${s}`,name:d.name||'N/A',org:g(o,'fn')||o?.handle||'N/A',country:d.country||'N/A',abuse:g(ab,'email')||'N/A',start:d.startAutnum||'N/A',end:d.endAutnum||'N/A',status:(d.status||[]).join(', ')||'N/A'});t('ASN lookup complete','success')}catch(e){setErr(`Failed: ${e.message}`)}setLd(false)};return(<div className="au"><div style={{display:'flex',gap:6,marginBottom:16}}><input className="inp" style={{maxWidth:200}} value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&lookup()} placeholder="e.g. AS15169 or 15169"/><Btn onClick={lookup} disabled={ld}>{ld?<><Spin/> Looking up...</>:'ASN Lookup'}</Btn>{r&&<Cpy text={Object.entries(r).map(([k,v])=>`${k}: ${v}`).join('\n')}/>}</div>{err&&<div className="ad">{err}</div>}{r&&<div className="g2" style={{gap:14}}><Card title={`ASN - ${r.asn}`}>{[['ASN',r.asn],['Name',r.name],['Organization',r.org],['Country',r.country],['Status',r.status],['Range',`${r.start} - ${r.end}`],['Abuse Email',r.abuse],].map(([l,v],i)=>(<DF key={i} label={l} value={v} mono={l==='ASN'||l==='Abuse Email'} hl={l==='ASN'?'var(--accent2)':undefined}/>))}</Card><Card title="Links & CLI"><Code lines={[`# BGP:`,`# https://bgpview.io/asn/${r.asn.replace('AS','')}`,`# https://bgp.he.net/${r.asn}`,``, `# WHOIS:`,`whois -h whois.arin.net ${r.asn}`,]}/></Card></div>}</div>)};
+
+/* ═══════════════ OFFENDER TRACKER ═══════════════ */
+const OffTrk=()=>{const[off,setOff]=useState(()=>{try{return JSON.parse(localStorage.getItem('abuse_offenders')||'[]')}catch{return[]}});const[q,setQ]=useState('');const[nip,setNip]=useState('');const[note,setNote]=useState('');const[ntype,setNtype]=useState('phishing');const[cr,setCr]=useState(null);const{t}=useT();const save=d=>{setOff(d);localStorage.setItem('abuse_offenders',JSON.stringify(d))};const add=()=>{const ip=nip.trim();if(!ip)return;const ex=off.find(o=>o.ip===ip);const e={ip,type:ntype,note:note.trim(),ts};if(ex){save(off.map(o=>o.ip===ip?{...o,count:(o.count||1)+1,lastSeen:ts(),history:[...(o.history||[]),e]}:o))}else{save([{ip,count:1,type:ntype,note:note.trim(),firstSeen:ts(),lastSeen:ts(),history:[e]},...off])}setNip('');setNote('');t('Offense logged','success')};const chk=()=>{const s=q.trim();setCr({q:s,found:off.find(o=>o.ip===s)})};const rm=ip=>{save(off.filter(o=>o.ip!==ip));t('Removed','info')};const TYPES=['phishing','malware','spam','ddos','brute-force','other'];return(<div className="au"><div className="g2" style={{gap:14,marginBottom:14}}><Card title="Check IP / Domain"><div style={{display:'flex',gap:6,marginBottom:10}}><input className="inp" value={q} onChange={e=>setQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&chk()} placeholder="Enter IP or domain..." style={{flex:1}}/><Btn onClick={chk}>Check</Btn></div>{cr&&<div className={cr.found?'ad':'as'}>{cr.found?`REPEAT OFFENDER - ${cr.q} - ${cr.found.count} offense(s) - Last: ${cr.found.lastSeen}`:`CLEAN - ${cr.q} - No prior offenses`}</div>}</Card><Card title="Log New Offense"><div style={{display:'flex',flexDirection:'column',gap:6}}><input className="inp" value={nip} onChange={e=>setNip(e.target.value)} placeholder="IP or domain..." onKeyDown={e=>e.key==='Enter'&&add()}/><select className="sel" style={{width:'100%'}} value={ntype} onChange={e=>setNtype(e.target.value)}>{TYPES.map(t=><option key={t} value={t}>{t.toUpperCase()}</option>)}</select><input className="inp" value={note} onChange={e=>setNote(e.target.value)} placeholder="Optional note..."/><Btn cls="bg2" onClick={add}>+ Log Offense</Btn></div></Card></div><Card title={`Offender Database — ${off.length} record(s)`} hr={off.length>0?<Btn cls="bd bx" onClick={()=>{save([]);t('Cleared','info')}}>Clear</Btn>:null}>{off.length===0?<div style={{padding:20,textAlign:'center',color:'var(--t3)',fontSize:12}}>No records</div>:<div style={{maxHeight:380,overflowY:'auto'}}><div style={{display:'grid',gridTemplateColumns:'1fr 90px 60px 1fr auto',background:'var(--bg3)',padding:'7px 12px',fontWeight:600,fontSize:10,textTransform:'uppercase',letterSpacing:'.06em',color:'var(--t3)',gap:6,borderBottom:'1px solid var(--border)',position:'sticky',top:0}}><span>IP / Domain</span><span>Type</span><span>#</span><span>Last Seen</span><span></span></div>{off.map((o,i)=>(<div key={i} style={{display:'grid',gridTemplateColumns:'1fr 90px 60px 1fr auto',padding:'8px 12px',borderBottom:'1px solid var(--border)',background:o.count>=3?'var(--red-bg)':i%2?'rgba(26,34,53,.3)':'transparent',gap:6,alignItems:'center'}}><span style={{fontFamily:"var(--mono)",fontSize:11,wordBreak:'break-all',color:o.count>=3?'var(--red)':'var(--accent2)',fontWeight:o.count>=3?'700':'500'}}>{o.count>=3&&'!! '}{o.ip}</span><span className={`badge ${o.type==='phishing'?'b-r':o.type==='malware'?'b-p':o.type==='spam'?'b-y':'b-gr'}`} style={{fontSize:9}}>{o.type}</span><span style={{fontFamily:"var(--mono)",fontSize:13,fontWeight:700,color:o.count>=3?'var(--red)':'var(--t1)'}}>{o.count}</span><span style={{fontFamily:"var(--mono)",fontSize:11,color:'var(--t3)'}}>{o.lastSeen}</span><Btn cls="bd bx" onClick={()=>rm(o.ip)}>✕</Btn></div>))}</div>}</Card></div>)};
+
+/* ═══════════════ EVIDENCE LOG ═══════════════ */
+const EvidLog=({entries,rm,exp,clr,add})=>{const[note,setNote]=useState('');const[filt,setFilt]=useState('ALL');const cats=['ALL','URL','HEADER','RESPONSE','NOTE','URL-CHECK'];const vis=filt==='ALL'?entries:entries.filter(e=>e.cat===filt);const{t}=useT();return(<div className="au"><div style={{display:'flex',gap:5,marginBottom:14,flexWrap:'wrap',alignItems:'center'}}><span style={{fontWeight:600,fontSize:11,color:'var(--t2)'}}>FILTER:</span>{cats.map(c=>(<Btn key={c} cls={filt===c?'':'bs'} style={{fontSize:10,padding:'3px 8px'}} onClick={()=>setFilt(c)}>{c}</Btn>))}<Btn cls="bg2" onClick={()=>{exp();t('Exported','success')}} style={{marginLeft:'auto'}}>Export</Btn>{entries.length>0&&<Btn cls="bd bx" onClick={()=>{clr();t('Cleared','info')}}>Clear</Btn>}</div><div style={{display:'flex',gap:6,marginBottom:14}}><input className="inp" value={note} onChange={e=>setNote(e.target.value)} placeholder="Add a note..." onKeyDown={e=>{if(e.key==='Enter'&&note.trim()){add(note.trim(),'NOTE');setNote('');t('Note added','success')}}} style={{flex:1}}/><Btn cls="bg2" onClick={()=>{if(note.trim()){add(note.trim(),'NOTE');setNote('');t('Note added','success')}}}>+ Note</Btn></div><div style={{border:'1px solid var(--border)',borderRadius:10,overflow:'hidden',background:'var(--card)',maxHeight:480,overflowY:'auto'}}>{vis.length===0?<div style={{padding:28,textAlign:'center',color:'var(--t3)',fontSize:12}}>No entries</div>:vis.map(e=>(<div key={e.id} className="le"><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}><div style={{display:'flex',gap:6,alignItems:'center'}}><span className={`badge ${e.cat==='URL'||e.cat==='URL-CHECK'?'b-bl':e.cat==='HEADER'?'b-p':e.cat==='RESPONSE'?'b-g':'b-gr'}`} style={{fontSize:9}}>{e.cat}</span><span style={{color:'var(--t3)',fontSize:10,fontFamily:"var(--mono)"}}>{e.ts}</span></div><Btn cls="bgh bx" onClick={()=>{rm(e.id);t('Removed','info')}}>✕</Btn></div><div style={{whiteSpace:'pre-wrap',wordBreak:'break-all',color:'var(--t2)',fontSize:11,fontFamily:"var(--mono)",lineHeight:1.7}}>{e.c}</div></div>))}</div><div style={{marginTop:6,fontSize:11,color:'var(--t3)'}}>{vis.length} entr{vis.length===1?'y':'ies'} {filt!=='ALL'?`(filtered: ${filt})`:'total'}</div></div>)};
+
+/* ═══════════════ MAIN APP ═══════════════ */
+const TABS=[
+  {id:'dashboard',l:'Dashboard',g:'Overview',i:'◉'},
+  {id:'url',l:'URL Checker',g:'Analysis',i:'🔗'},
+  {id:'emailparse',l:'Email Headers',g:'Analysis',i:'📧'},
+  {id:'headers',l:'Header Analyzer',g:'Analysis',i:'📨'},
+  {id:'recon',l:'IP Recon',g:'Recon',i:'🌐'},
+  {id:'whois',l:'Whois Lookup',g:'Recon',i:'🔍'},
+  {id:'abusecon',l:'Abuse Contact',g:'Recon',i:'📮'},
+  {id:'asn',l:'ASN Explorer',g:'Recon',i:'🏢'},
+  {id:'ptr',l:'PTR/RDNS',g:'Network',i:'🔎'},
+  {id:'subnet',l:'Subnet Calc',g:'Network',i:'📐'},
+  {id:'netconfig',l:'Net Config Gen',g:'Network',i:'⚙'},
+  {id:'portscan',l:'Port Scan Gen',g:'Network',i:'📡'},
+  {id:'acl',l:'ACL Builder',g:'Network',i:'🛡'},
+  {id:'defang',l:'Defang/Refang',g:'Utilities',i:'🔒'},
+  {id:'decode',l:'Decode/Encode',g:'Utilities',i:'🔓'},
+  {id:'hash',l:'Hash Checker',g:'Utilities',i:'#'},
+  {id:'offender',l:'Offender Tracker',g:'Utilities',i:'⚠'},
+  {id:'response',l:'Response Gen',g:'Utilities',i:'📝'},
+  {id:'evidence',l:'Evidence Log',g:'',i:'📋'},
 ];
 
-const App = () => {
-  const [activeTab, setActiveTab] = useState('url');
-  const [reconIP, setReconIPState] = useState('');
-  const { entries, addEntry, removeEntry, exportAll } = useEvidenceLog();
+const App=()=>{const[tab,setTab]=useState('dashboard');const[rip,setRip]=useState('');const[sbOpen,setSbOpen]=useState(true);const[cmdOpen,setCmdOpen]=useState(false);const[sq,setSq]=useState('');const{entries,add,rm,clr,exp}=useLog();const setRIP=ip=>{setRip(ip);setTab('recon')};
+useEffect(()=>{const h=e=>{if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();setCmdOpen(o=>!o)}};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[]);
 
-  const setReconIP = ip => {
-    setReconIPState(ip);
-    setActiveTab('recon');
-  };
+const fTabs=useMemo(()=>{if(!sq)return TABS;const q=sq.toLowerCase();return TABS.filter(t=>t.l.toLowerCase().includes(q)||t.g.toLowerCase().includes(q))},[sq]);
+const groups=[];let cg='';fTabs.forEach(t=>{if(t.g!==cg){if(t.g)groups.push({l:t.g,tools:[]});cg=t.g}if(t.g)groups[groups.length-1].tools.push(t);else groups.push({l:'',tools:[t]})});
 
-  const activeTool = TABS.find(t=>t.id===activeTab);
-
-  const groups = [];
-  let currentGroup = '';
-  TABS.forEach(t => {
-    if (t.group !== currentGroup) {
-      if (t.group) groups.push({ label: t.group, tools: [] });
-      currentGroup = t.group;
-    }
-    if (t.group) groups[groups.length-1].tools.push(t);
-    else groups.push({ label: '', tools: [t] });
-  });
-
-  return (
-    <div className="app-layout">
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <div className="sidebar-title">
-            <div className="sidebar-title-icon">A</div>
-            <div>
-              <div>Abuse Console</div>
-            </div>
-          </div>
-          <div className="sidebar-subtitle">v2.0 - Internal Use Only</div>
-        </div>
-        <div className="sidebar-nav">
-          {groups.filter(g=>g.label).map(g=>(
-            <div key={g.label}>
-              <div className="nav-group-label">{g.label}</div>
-              {g.tools.map(t=>(
-                <div key={t.id}
-                  className={`nav-item ${activeTab===t.id?'active':''}`}
-                  onClick={()=>setActiveTab(t.id)}
-                >
-                  {t.label}
-                  {t.id==='evidence' && entries.length>0 && (
-                    <span className="nav-item-badge">{entries.length}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className="sidebar-footer">
-          <div><span className="status-dot"></span>Operational</div>
-          <div>{ts().slice(0,10)}</div>
-        </div>
-      </div>
-
-      {/* Main area */}
-      <div className="main-area">
-        <div className="top-bar">
-          <div className="top-bar-title">{activeTool?.label||'Abuse Console'}</div>
-          <div className="top-bar-meta">
-            <span>{TABS.length} tools</span>
-            <span style={{color:'var(--border-strong)'}}>|</span>
-            <span>{entries.length} log entries</span>
-          </div>
-        </div>
-        <div className="content-area">
-          {activeTab==='url'        && <URLChecker addEntry={addEntry} setReconIP={setReconIP}/>}
-          {activeTab==='emailparse' && <EmailHeaderParser addEntry={addEntry} setReconIP={setReconIP}/>}
-          {activeTab==='headers'   && <HeaderAnalyzer addEntry={addEntry} setReconIP={setReconIP}/>}
-          {activeTab==='recon'     && <IPRecon reconIP={reconIP} setReconIP={setReconIPState}/>}
-          {activeTab==='whois'     && <WhoisLookup/>}
-          {activeTab==='abusecon'  && <AbuseContactFinder/>}
-          {activeTab==='asn'       && <ASNExplorer/>}
-          {activeTab==='ptr'       && <PTRTool/>}
-          {activeTab==='subnet'    && <SubnetCalc/>}
-          {activeTab==='netconfig' && <NetConfigGen/>}
-          {activeTab==='portscan'  && <PortScanGen/>}
-          {activeTab==='acl'       && <ACLBuilder/>}
-          {activeTab==='defang'    && <DefangTool/>}
-          {activeTab==='decode'    && <DecodeTool/>}
-          {activeTab==='hash'      && <HashChecker/>}
-          {activeTab==='offender'  && <OffenderTracker/>}
-          {activeTab==='response'  && <ResponseGenerator addEntry={addEntry}/>}
-          {activeTab==='evidence'  && <EvidenceLog entries={entries} removeEntry={removeEntry} exportAll={exportAll} addEntry={addEntry}/>}
-        </div>
-      </div>
-    </div>
-  );
-};
+const at=TABS.find(t=>t.id===tab);
+return(<TP><div className="layout">{cmdOpen&&<CmdP tabs={TABS} onSel={setTab} onClose={()=>setCmdOpen(false)}/>}
+<div className={`sb${sbOpen?'':' collapsed'}`}>
+  <div className="sh"><div className="shc"><div className="logo">A</div><div><div className="sl">Abuse Console</div><div className="sst">v2.0 - Internal Use</div></div></div></div>
+  <div className="ss"><input placeholder="Search tools... (⌘K)" value={sq} onChange={e=>setSq(e.target.value)}/></div>
+  <div className="sn">{groups.filter(g=>g.l).map(g=>(<div key={g.l}><div className="ngl">{g.l}</div>{g.tools.map(t=>(<div key={t.id} className={`ni${tab===t.id?' act':''}`} onClick={()=>{setTab(t.id);setSq('')}}><span className="nic">{t.i}</span><span className="nit">{t.l}</span>{t.id==='evidence'&&entries.length>0&&<span className="nbg">{entries.length}</span>}</div>))}</div>))}</div>
+  <div className="sf"><div className="sft"><span className="sd"></span>Operational</div><div className="sft">{new Date().toLocaleDateString()}</div></div>
+</div>
+<div className="ma">
+  <div className="tb"><Btn cls="cb" onClick={()=>setSbOpen(o=>!o)}>{sbOpen?'◁':'▷'}</Btn><div className="tt">{at?.l||'Dashboard'}</div><div className="tm"><div className="mi"><div className="md md-g"></div>Online</div><div className="mi"><div className="md md-b"></div>{TABS.length} tools</div><div className="mi">{entries.length} logs</div></div></div>
+  <div className="ca">{tab==='dashboard'&&<Dash entries={entries} setTab={setTab}/>}{tab==='url'&&<URLChk addEntry={add} setReconIP={setRIP}/>}{tab==='emailparse'&&<EmailHP addEntry={add} setReconIP={setRIP}/>}{tab==='headers'&&<HdrAn addEntry={add} setReconIP={setRIP}/>}{tab==='recon'&&<IPRecon reconIP={rip} setReconIP={setRip}/>}{tab==='whois'&&<Whois/>}{tab==='abusecon'&&<AbuseCon/>}{tab==='asn'&&<ASN/>}{tab==='ptr'&&<PTR/>}{tab==='subnet'&&<SubCalc/>}{tab==='netconfig'&&<NetCfg/>}{tab==='portscan'&&<PortScan/>}{tab==='acl'&&<ACL/>}{tab==='defang'&&<Defang/>}{tab==='decode'&&<Decode/>}{tab==='hash'&&<HashChk/>}{tab==='offender'&&<OffTrk/>}{tab==='response'&&<RespGen addEntry={add}/>}{tab==='evidence'&&<EvidLog entries={entries} rm={rm} exp={exp} clr={clr} add={add}/>}</div>
+</div>
+</div></TP>)};
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
